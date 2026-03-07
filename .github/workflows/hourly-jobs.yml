@@ -67,5 +67,4 @@ jobs:
           FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-          BALANCE_THRESHOLD: "99999"
         run: python run.py balance_alert
