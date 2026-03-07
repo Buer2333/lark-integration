@@ -47,12 +47,16 @@ jobs:
         run: python run.py ad_report
 
       - name: Update shop credentials secret
-        if: ${{ always() && hashFiles('/tmp/refreshed_creds.json') != '' }}
+        if: ${{ always() }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh secret set TIKTOK_SHOP_CREDENTIALS -R Buer2333/lark-integration < /tmp/refreshed_creds.json
-          echo "Shop credentials secret updated"
+          if [ -f /tmp/refreshed_creds.json ]; then
+            gh secret set TIKTOK_SHOP_CREDENTIALS -R Buer2333/lark-integration < /tmp/refreshed_creds.json
+            echo "Shop credentials secret updated"
+          else
+            echo "No refreshed credentials file, skipping"
+          fi
 
       - name: Run balance_alert
         if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'schedule' }}
