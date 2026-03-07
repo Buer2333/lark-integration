@@ -1,0 +1,66 @@
+name: Hourly Jobs
+
+on:
+  schedule:
+    # Every hour at :00
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ad_report
+          - balance_alert
+
+jobs:
+  run-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lark-bot
+        uses: actions/checkout@v4
+        with:
+          repository: Buer2333/lark-bot
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run ad_report
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'schedule' }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_SHOP_CREDENTIALS: ${{ secrets.TIKTOK_SHOP_CREDENTIALS }}
+          FEISHU_WEBHOOK_ID: ${{ secrets.FEISHU_WEBHOOK_ID }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          REFRESHED_CREDS_PATH: /tmp/refreshed_creds.json
+        run: python run.py ad_report
+
+      - name: Update shop credentials secret
+        if: ${{ always() && hashFiles('/tmp/refreshed_creds.json') != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh secret set TIKTOK_SHOP_CREDENTIALS -R Buer2333/lark-integration < /tmp/refreshed_creds.json
+          echo "Shop credentials secret updated"
+
+      - name: Run balance_alert
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'schedule' }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          FEISHU_WEBHOOK_ID: ${{ secrets.FEISHU_WEBHOOK_ID }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: python run.py balance_alert
