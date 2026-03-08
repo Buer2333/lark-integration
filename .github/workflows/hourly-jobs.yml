@@ -2,8 +2,10 @@ name: Hourly Jobs
 
 on:
   schedule:
-    # Every hour at :00
+    # Backup: GitHub cron (may delay 5-30 min)
     - cron: '0 * * * *'
+  repository_dispatch:
+    types: [hourly-trigger]
   workflow_dispatch:
     inputs:
       job:
@@ -15,6 +17,10 @@ on:
           - all
           - ad_report
           - balance_alert
+
+concurrency:
+  group: hourly-jobs
+  cancel-in-progress: false
 
 jobs:
   run-jobs:
@@ -34,7 +40,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run ad_report
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'schedule' }}
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
@@ -59,7 +65,7 @@ jobs:
           fi
 
       - name: Run balance_alert
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'schedule' }}
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
