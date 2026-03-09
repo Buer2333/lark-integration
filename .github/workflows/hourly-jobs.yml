@@ -1,4 +1,5 @@
 name: Hourly Jobs
+run-name: "${{ github.event_name == 'schedule' && '⏰ Scheduled' || github.event_name == 'repository_dispatch' && '🔄 Cron-job.org' || '🧪 Manual Test' }}"
 
 on:
   schedule:
