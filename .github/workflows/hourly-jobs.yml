@@ -42,7 +42,8 @@ jobs:
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
-          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
           TIKTOK_SHOP_CREDENTIALS: ${{ secrets.TIKTOK_SHOP_CREDENTIALS }}
           FEISHU_WEBHOOK_AD_REPORT: ${{ secrets.FEISHU_WEBHOOK_AD_REPORT }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
@@ -67,7 +68,8 @@ jobs:
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
-          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
           FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
           FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
