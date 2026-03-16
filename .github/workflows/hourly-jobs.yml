@@ -52,6 +52,32 @@ jobs:
           REFRESHED_CREDS_PATH: /tmp/refreshed_creds.json
         run: python run.py ad_report
 
+      - name: Run balance_alert
+        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'repository_dispatch') }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
+          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
+          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: python run.py balance_alert
+
+      - name: Run ban_alert
+        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'repository_dispatch') }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
+          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
+          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: python run.py ban_alert
+
       - name: Sync ad cost cache seed
         if: ${{ always() }}
         run: |
@@ -77,29 +103,3 @@ jobs:
           else
             echo "No refreshed credentials file, skipping"
           fi
-
-      - name: Run balance_alert
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'repository_dispatch' }}
-        env:
-          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
-          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
-          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
-          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
-          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
-          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
-          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-        run: python run.py balance_alert
-
-      - name: Run ban_alert
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'repository_dispatch' }}
-        env:
-          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
-          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
-          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
-          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
-          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
-          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
-          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-        run: python run.py ban_alert
