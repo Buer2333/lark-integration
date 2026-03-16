@@ -80,6 +80,7 @@ jobs:
 
       - name: Sync ad cost cache seed
         if: ${{ always() }}
+        continue-on-error: true
         run: |
           if git diff --quiet data/ad_cost_seed.json 2>/dev/null; then
             echo "No cache changes to sync"
