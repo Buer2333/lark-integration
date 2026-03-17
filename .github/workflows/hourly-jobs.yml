@@ -38,8 +38,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Run ban_alert (must run before ad_report)
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'repository_dispatch' }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
+          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
+          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: python run.py ban_alert
+
       - name: Run ad_report
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'repository_dispatch' }}
+        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'repository_dispatch') }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
@@ -65,32 +78,19 @@ jobs:
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
         run: python run.py balance_alert
 
-      - name: Run ban_alert
-        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'repository_dispatch') }}
-        env:
-          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
-          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
-          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
-          TIKTOK_ACCESS_TOKEN_ZECHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_ZECHENG }}
-          FEISHU_WEBHOOK_BALANCE_ALERT: ${{ secrets.FEISHU_WEBHOOK_BALANCE_ALERT }}
-          FEISHU_BALANCE_MENTION_ID: ${{ secrets.FEISHU_BALANCE_MENTION_ID }}
-          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-        run: python run.py ban_alert
-
-      - name: Sync ad cost cache seed
+      - name: Sync cache seeds
         if: ${{ always() }}
         continue-on-error: true
         run: |
-          if git diff --quiet data/ad_cost_seed.json 2>/dev/null; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ad_cost_seed.json data/ban_status_seed.json
+          if git diff --cached --quiet; then
             echo "No cache changes to sync"
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add data/ad_cost_seed.json
-            git commit -m "auto: sync ad cost cache seed [skip ci]"
+            git commit -m "auto: sync cache seeds [skip ci]"
             git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/Buer2333/lark-bot.git HEAD:main
-            echo "Cache seed synced"
+            echo "Cache seeds synced"
           fi
 
       - name: Update shop credentials secret
