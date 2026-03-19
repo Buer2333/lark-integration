@@ -1,0 +1,64 @@
+name: Video Transcribe
+run-name: "🎬 Video Transcribe"
+
+on:
+  repository_dispatch:
+    types: [video-transcribe]
+  workflow_dispatch:
+    inputs:
+      tiktok_url:
+        description: 'TikTok video URL'
+        required: true
+        type: string
+      message_id:
+        description: 'Feishu message ID to reply to (optional)'
+        required: false
+        type: string
+
+concurrency:
+  group: video-transcribe-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout lark-bot
+        uses: actions/checkout@v4
+        with:
+          repository: Buer2333/lark-bot
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install -r requirements.txt yt-dlp
+
+      - name: Run video_transcribe (dispatch)
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: |
+          python run.py video_transcribe \
+            --url "${{ github.event.client_payload.tiktok_url }}" \
+            --message-id "${{ github.event.client_payload.message_id }}" \
+            --chat-id "${{ github.event.client_payload.chat_id }}"
+
+      - name: Run video_transcribe (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: |
+          python run.py video_transcribe \
+            --url "${{ github.event.inputs.tiktok_url }}" \
+            --message-id "${{ github.event.inputs.message_id || '' }}"
