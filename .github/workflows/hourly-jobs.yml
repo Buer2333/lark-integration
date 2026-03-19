@@ -72,7 +72,6 @@ jobs:
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           REFRESHED_CREDS_PATH: /tmp/refreshed_creds.json
-          USE_MCP_BACKEND: "1"
         run: python run.py ad_report
 
       - name: Run balance_alert
