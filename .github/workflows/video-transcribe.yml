@@ -58,7 +58,8 @@ jobs:
             --message-id "${{ github.event.client_payload.message_id }}" \
             --chat-id "${{ github.event.client_payload.chat_id }}" \
             --sender-open-id "${{ github.event.client_payload.sender_open_id }}" \
-            --processing-message-id "${{ github.event.client_payload.processing_message_id }}"
+            --processing-message-id "${{ github.event.client_payload.processing_message_id }}" \
+            ${{ github.event.client_payload.send_video == true && '--send-video' || '' }}
 
       - name: Run video_transcribe (manual)
         if: ${{ github.event_name == 'workflow_dispatch' }}
