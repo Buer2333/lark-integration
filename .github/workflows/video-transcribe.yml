@@ -48,7 +48,7 @@ jobs:
       - name: Run video_transcribe (dispatch)
         if: ${{ github.event_name == 'repository_dispatch' }}
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
@@ -61,7 +61,7 @@ jobs:
       - name: Run video_transcribe (manual)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
