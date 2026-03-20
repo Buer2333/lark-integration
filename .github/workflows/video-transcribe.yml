@@ -38,7 +38,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg
-          pip install -r requirements.txt yt-dlp
+          pip install -r requirements.txt yt-dlp curl_cffi
+
+      - name: Write cookies file
+        run: echo "$TIKTOK_COOKIES" > /tmp/tiktok_cookies.txt
+        env:
+          TIKTOK_COOKIES: ${{ secrets.TIKTOK_COOKIES }}
 
       - name: Run video_transcribe (dispatch)
         if: ${{ github.event_name == 'repository_dispatch' }}
@@ -46,6 +51,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
             --url "${{ github.event.client_payload.tiktok_url }}" \
@@ -58,6 +64,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
             --url "${{ github.event.inputs.tiktok_url }}" \
