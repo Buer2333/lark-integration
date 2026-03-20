@@ -49,8 +49,8 @@ jobs:
         if: ${{ github.event_name == 'repository_dispatch' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          FEISHU_TRANSCRIBE_APP_ID: ${{ secrets.FEISHU_TRANSCRIBE_APP_ID }}
-          FEISHU_TRANSCRIBE_APP_SECRET: ${{ secrets.FEISHU_TRANSCRIBE_APP_SECRET }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
@@ -62,8 +62,8 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          FEISHU_TRANSCRIBE_APP_ID: ${{ secrets.FEISHU_TRANSCRIBE_APP_ID }}
-          FEISHU_TRANSCRIBE_APP_SECRET: ${{ secrets.FEISHU_TRANSCRIBE_APP_SECRET }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
