@@ -56,7 +56,8 @@ jobs:
           python run.py video_transcribe \
             --url "${{ github.event.client_payload.tiktok_url }}" \
             --message-id "${{ github.event.client_payload.message_id }}" \
-            --chat-id "${{ github.event.client_payload.chat_id }}"
+            --chat-id "${{ github.event.client_payload.chat_id }}" \
+            --sender-open-id "${{ github.event.client_payload.sender_open_id }}"
 
       - name: Run video_transcribe (manual)
         if: ${{ github.event_name == 'workflow_dispatch' }}
