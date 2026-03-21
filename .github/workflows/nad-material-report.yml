@@ -1,0 +1,73 @@
+name: NAD Material Report
+run-name: "📊 NAD+ Material Report"
+
+on:
+  repository_dispatch:
+    types: [nad-material-report]
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start date (YYYY-MM-DD)'
+        required: true
+        type: string
+      end_date:
+        description: 'End date (YYYY-MM-DD)'
+        required: true
+        type: string
+      message_id:
+        description: 'Feishu message ID to reply to (optional)'
+        required: false
+        type: string
+
+concurrency:
+  group: nad-material-report-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout lark-bot
+        uses: actions/checkout@v4
+        with:
+          repository: Buer2333/lark-bot
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run nad_material_report (dispatch)
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: |
+          python run.py nad_material_report \
+            --start-date "${{ github.event.client_payload.start_date }}" \
+            --end-date "${{ github.event.client_payload.end_date }}" \
+            --message-id "${{ github.event.client_payload.message_id }}" \
+            --chat-id "${{ github.event.client_payload.chat_id }}" \
+            --processing-message-id "${{ github.event.client_payload.processing_message_id }}"
+
+      - name: Run nad_material_report (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
+          TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
+          TIKTOK_ACCESS_TOKEN_XINCHENG: ${{ secrets.TIKTOK_ACCESS_TOKEN_XINCHENG }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: |
+          python run.py nad_material_report \
+            --start-date "${{ github.event.inputs.start_date }}" \
+            --end-date "${{ github.event.inputs.end_date }}" \
+            --message-id "${{ github.event.inputs.message_id || '' }}"
