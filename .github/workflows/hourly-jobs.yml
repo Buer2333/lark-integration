@@ -87,21 +87,6 @@ jobs:
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
         run: python run.py balance_alert
 
-      - name: Sync cache seeds
-        if: ${{ always() }}
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ad_cost_seed.json data/ban_status_seed.json data/balance_snapshot_seed.json data/product_groups_seed.json
-          if git diff --cached --quiet; then
-            echo "No cache changes to sync"
-          else
-            git commit -m "auto: sync cache seeds [skip ci]"
-            git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/Buer2333/lark-bot.git HEAD:main
-            echo "Cache seeds synced"
-          fi
-
       - name: Update shop credentials secret
         if: ${{ always() }}
         env:
