@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
-ExecStart=/bin/bash -c 'YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && /home/shining/services/lark-bot/.venv/bin/python run.py material_report --product-group Hiileathy-US-NAD+ --start-date "$YESTERDAY" --end-date "$YESTERDAY" --push-chat-id oc_d7e61968e4a6d9389b4354bc14861e12'
+ExecStart=/bin/bash -c 'YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && /home/shining/services/lark-bot/.venv/bin/python run.py material_report --product-group Hiileathy-US-NAD+ --start-date "$YESTERDAY" --end-date "$YESTERDAY" --push-chat-id oc_d7e61968e4a6d9989b4354bc14861e12'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
