@@ -1,0 +1,15 @@
+[Unit]
+Description=Refresh TikTok Shop Tokens
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py refresh_tokens
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=refresh-tokens
+NoNewPrivileges=true
