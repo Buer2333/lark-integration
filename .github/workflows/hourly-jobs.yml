@@ -1,9 +1,9 @@
 name: Hourly Jobs
-run-name: "${{ github.event_name == 'schedule' && '⏰ Cron' || '🧪 Manual Test' }}"
+run-name: "${{ github.event_name == 'repository_dispatch' && '🔄 Cron-job.org' || '🧪 Manual Test' }}"
 
 on:
-  schedule:
-    - cron: '58 * * * *'  # XX:58 — report publishes ~at the hour
+  repository_dispatch:
+    types: [hourly-trigger]
   workflow_dispatch:
     inputs:
       job:
@@ -48,7 +48,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run ban_alert (must run before ad_report)
-        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'schedule' }}
+        if: ${{ github.event.inputs.job == 'all' || github.event.inputs.job == 'ban_alert' || github.event_name == 'repository_dispatch' }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
@@ -61,7 +61,7 @@ jobs:
         run: python run.py ban_alert
 
       - name: Run ad_report
-        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'schedule') }}
+        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'ad_report' || github.event_name == 'repository_dispatch') }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
@@ -75,7 +75,7 @@ jobs:
         run: python run.py ad_report
 
       - name: Run balance_alert
-        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'schedule') }}
+        if: ${{ always() && (github.event.inputs.job == 'all' || github.event.inputs.job == 'balance_alert' || github.event_name == 'repository_dispatch') }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
           TIKTOK_SECRET: ${{ secrets.TIKTOK_SECRET }}
