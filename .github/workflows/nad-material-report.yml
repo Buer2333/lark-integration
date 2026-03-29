@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run nad_material_report (dispatch)
+      - name: Run daily_report --view editor (dispatch)
         if: ${{ github.event_name == 'repository_dispatch' }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
@@ -51,14 +51,15 @@ jobs:
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
         run: |
-          python run.py nad_material_report \
+          python run.py daily_report --view editor \
+            --product-group "${{ github.event.client_payload.product_group || 'Hiileathy-US-NAD+' }}" \
             --start-date "${{ github.event.client_payload.start_date }}" \
             --end-date "${{ github.event.client_payload.end_date }}" \
             --message-id "${{ github.event.client_payload.message_id }}" \
             --chat-id "${{ github.event.client_payload.chat_id }}" \
             --processing-message-id "${{ github.event.client_payload.processing_message_id }}"
 
-      - name: Run nad_material_report (manual)
+      - name: Run daily_report --view editor (manual)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           TIKTOK_APP_ID: ${{ secrets.TIKTOK_APP_ID }}
@@ -67,7 +68,8 @@ jobs:
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
         run: |
-          python run.py nad_material_report \
+          python run.py daily_report --view editor \
+            --product-group Hiileathy-US-NAD+ \
             --start-date "${{ github.event.inputs.start_date }}" \
             --end-date "${{ github.event.inputs.end_date }}" \
             --message-id "${{ github.event.inputs.message_id || '' }}"
