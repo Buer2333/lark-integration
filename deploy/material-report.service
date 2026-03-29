@@ -1,0 +1,24 @@
+[Unit]
+Description=Daily Material Report (all product groups)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/bin/bash -c '\
+  YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && \
+  .venv/bin/python run.py daily_report --view editor \
+    --product-group Hiileathy-US-NAD+ \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
+    --push-chat-id oc_d7e61968e4a6d9989b4354bc14861e12 && \
+  .venv/bin/python run.py daily_report --view editor \
+    --product-group Hiileathy-US-Shilajit \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
+    --push-chat-id oc_ab30ead006c140725a1ee0e8fd98e6d4'
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=material-report
+NoNewPrivileges=true
