@@ -1,0 +1,12 @@
+[Unit]
+Description=GMVMAX Material Spend Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py gmvmax_monitor --today
+Environment=PATH=/home/shining/services/lark-bot/.venv/bin:/usr/bin
+EnvironmentFile=/home/shining/services/lark-bot/.env
+TimeoutStartSec=300

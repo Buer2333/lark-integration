@@ -1,0 +1,18 @@
+[Unit]
+Description=Daily video_script_collect — refresh script_id bitable mapping (17:50 CST, before material-report)
+After=network.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/bin/bash -c '\
+  .venv/bin/python run.py video_script_collect --product-group Hiileathy-US-NAD+ && \
+  .venv/bin/python run.py video_script_collect --product-group Hiileathy-US-Shilajit && \
+  .venv/bin/python run.py video_script_collect --product-group FlyNew-US-Shilajit && \
+  .venv/bin/python run.py video_script_collect --product-group FlyNew-US-Bundle'
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=script-collect
+NoNewPrivileges=true

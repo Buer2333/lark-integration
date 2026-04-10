@@ -1,0 +1,23 @@
+[Unit]
+Description=TikTok Data Gateway (MCP Server)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python -m gateway
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=10
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tiktok-gateway
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

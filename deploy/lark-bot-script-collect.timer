@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily script collect timer (09:50 UTC = 17:50 CST, 10min before material-report)
+
+[Timer]
+OnCalendar=*-*-* 09:50:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

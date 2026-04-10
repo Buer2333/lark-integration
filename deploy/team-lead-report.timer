@@ -1,0 +1,9 @@
+[Unit]
+Description=Team Lead Daily Report Timer (18:20 CST)
+
+[Timer]
+OnCalendar=*-*-* 10:20:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

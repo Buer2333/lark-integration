@@ -1,0 +1,15 @@
+[Unit]
+Description=Team Lead Daily Report (private message to leads)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/bin/bash -c "YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py daily_report --view lead --date $YESTERDAY --push-to-leads"
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=team-lead-report
+NoNewPrivileges=true

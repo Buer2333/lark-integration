@@ -9,14 +9,26 @@ User=shining
 WorkingDirectory=/home/shining/services/lark-bot
 ExecStart=/bin/bash -c '\
   YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && \
-  .venv/bin/python run.py daily_report --view editor \
+  .venv/bin/python run.py material_report \
     --product-group Hiileathy-US-NAD+ \
     --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
     --push-chat-id oc_d7e61968e4a6d9989b4354bc14861e12 && \
-  .venv/bin/python run.py daily_report --view editor \
+  .venv/bin/python run.py material_report \
     --product-group Hiileathy-US-Shilajit \
     --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_ab30ead006c140725a1ee0e8fd98e6d4'
+    --push-chat-id oc_ab30ead006c140725a1ee0e8fd98e6d4 && \
+  .venv/bin/python run.py material_report \
+    --product-group FlyNew-US-Shilajit --team 杨斯丹 \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
+    --push-chat-id oc_3a8c367358d0ae61ba9fa26f52ba2f86 && \
+  .venv/bin/python run.py material_report \
+    --product-group FlyNew-US-Shilajit --team 汪宇航 \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
+    --push-chat-id oc_862abbca825121727d15a75029dbc3a9 && \
+  .venv/bin/python run.py material_report \
+    --product-group FlyNew-US-Bundle \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
+    --push-chat-id oc_20ccb01affd50aade9ff16a0e714f8d8'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal

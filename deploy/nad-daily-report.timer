@@ -1,9 +1,0 @@
-[Unit]
-Description=NAD+ Daily Material Report Timer (18:00 CST)
-
-[Timer]
-OnCalendar=*-*-* 10:00:00 UTC
-Persistent=true
-
-[Install]
-WantedBy=timers.target

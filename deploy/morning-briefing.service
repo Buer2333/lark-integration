@@ -1,0 +1,15 @@
+[Unit]
+Description=Morning Briefing (Top GMVMAX creatives per group)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py morning_briefing --today
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=morning-briefing
+NoNewPrivileges=true
