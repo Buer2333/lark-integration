@@ -1,4 +1,5 @@
 [Unit]
+# Auto-deployed via .github/workflows/deploy-systemd.yml since 2026-04-11.
 Description=GMVMAX Monitor Timer (every 30min, offset +5min)
 
 [Timer]
