@@ -51,17 +51,36 @@ lark-bot 有对称 guard：出现任何 `*.service` / `*.timer` → CI 红。
 
 ## 部署流程
 
-### 当前状态（2026-04-11）
+### 当前状态（2026-04-11 起）
 
-- **Python 代码** → lark-bot 的 `deploy.yml` 自动 SSH pull + 重启服务，闭环
-- **systemd unit 文件** → 暂无自动部署，改了 `deploy/*.timer` 必须手动 `scp` 到 VPS + `sudo systemctl daemon-reload`
-- **规划**：为本仓库新增 `deploy-systemd.yml`，监听 `deploy/*.{service,timer}` 变更自动同步 VPS（Phase B）
+- **Python 代码** → lark-bot 的 `deploy.yml` 自动 SSH pull + 重启服务
+- **systemd unit 文件** → 本仓库的 `deploy-systemd.yml` 自动同步到 VPS
 
-### 手动同步命令（Phase B 上线前）
+### `deploy-systemd.yml` 工作原理
+
+- 触发：push 到 main 且 `deploy/*.service` 或 `deploy/*.timer` 有变更（也支持 `workflow_dispatch` 手动触发空跑）
+- 流程：
+  1. `appleboy/scp-action` 把 `deploy/*.{service,timer}` 推到 VPS 的 `/tmp/deploy-systemd-staging/`
+  2. `appleboy/ssh-action` 逐个 `cmp` 对比 `/etc/systemd/system/` 下的现有文件
+  3. diff 的用 `sudo install -m 0644 -o root -g root` 写入目标位置
+  4. 有变更才 `sudo systemctl daemon-reload`
+  5. 对每个变更的 `.timer` `sudo systemctl restart` + `is-active` 验证
+- **跳过** `lark-bot-ws.service` / `tiktok-gateway.service`——这两个长驻 daemon 归 lark-bot/deploy.yml 管，本 workflow 不越界
+- 不用 sudoers 定制：VPS 的 `shining` 用户已在 `google-sudoers` 组自带 passwordless sudo
+- 不用 `rsync`：VPS 未安装，改用 `sudo install`
+
+### 手动触发 / 紧急回退
 
 ```bash
+# 强制空跑一次对齐（所有 unchanged 说明本地和 VPS 一致）
+gh workflow run deploy-systemd.yml -R Buer2333/lark-integration
+
+# 查看最近一次运行
+gh run list -R Buer2333/lark-integration --workflow=deploy-systemd.yml --limit 3
+
+# 紧急情况下手动同步某个文件（等价于 workflow 的单文件逻辑）
 gcloud compute scp deploy/xxx.timer lark-bot:/tmp/ --zone=us-west1-b
-gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo cp /tmp/xxx.timer /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl restart xxx.timer"
+gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo install -m 0644 -o root -g root /tmp/xxx.timer /etc/systemd/system/xxx.timer && sudo systemctl daemon-reload && sudo systemctl restart xxx.timer"
 ```
 
 ## VPS 手动操作日志
@@ -71,6 +90,7 @@ gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo cp /tmp/xxx.timer 
 | 日期 | 操作 | 原因 |
 |---|---|---|
 | 2026-04-11 | 手动 `scp` + `daemon-reload` `gmvmax-monitor.timer` 从 `*:00,30` → `*:05,35` | 1529d7b commit 后暴露 lark-integration 无自动部署，drift 2 天 |
+| 2026-04-11 | 在 lark-integration repo 配置 `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` secrets | 新增 `deploy-systemd.yml` 需要 SSH 到 VPS；key 复用 `~/.ssh/google_compute_engine` |
 
 ## 相关仓库
 
