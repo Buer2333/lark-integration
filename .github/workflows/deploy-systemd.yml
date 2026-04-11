@@ -77,10 +77,14 @@ jobs:
             sudo systemctl daemon-reload
             echo "daemon-reload OK"
 
+            # enable + restart is idempotent on already-enabled timers
+            # and is required for brand-new timer files so Persistent=true
+            # survives reboots.
             for t in "${changed_timers[@]}"; do
+              sudo systemctl enable "$t"
               sudo systemctl restart "$t"
               sudo systemctl is-active --quiet "$t" \
-                && echo "restart OK: $t" \
+                && echo "enable+restart OK: $t" \
                 || { echo "restart FAILED: $t"; exit 1; }
             done
 
