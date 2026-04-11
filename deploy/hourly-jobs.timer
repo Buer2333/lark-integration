@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly jobs trigger (ban_alert + ad_report + balance_alert)
+
+[Timer]
+# Fire exactly at the top of every hour. ad_report keeps the historic
+# on-the-hour cadence operators expect. ban_alert runs just before it,
+# balance_alert just after — see hourly-jobs.service ExecStart order.
+OnCalendar=*:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

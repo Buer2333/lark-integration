@@ -1,0 +1,26 @@
+[Unit]
+Description=lark-bot hourly jobs (ban_alert + ad_report + balance_alert)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+EnvironmentFile=/home/shining/services/lark-bot/.env
+# Run all three sequentially, but never let one failure block the next.
+# Matches the semantics of the old GH Actions workflow which used
+# `if: ${{ always() }}` on ad_report and balance_alert. Each job already
+# reports its own errors to Feishu, so we swallow non-zero here.
+# ban_alert intentionally runs first so any freshly banned ad accounts
+# are reflected in ad_report's subsequent data fetch.
+ExecStart=/bin/bash -c 'set +e; \
+  .venv/bin/python run.py ban_alert; \
+  .venv/bin/python run.py ad_report; \
+  .venv/bin/python run.py balance_alert; \
+  exit 0'
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hourly-jobs
+TimeoutStartSec=600
+NoNewPrivileges=true

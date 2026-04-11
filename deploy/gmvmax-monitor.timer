@@ -1,15 +1,21 @@
 [Unit]
 # Auto-deployed via .github/workflows/deploy-systemd.yml since 2026-04-11.
-Description=GMVMAX Monitor Timer (every 30min, offset +5min)
+Description=GMVMAX Monitor Timer (every 30min, offset +15min)
 
 [Timer]
-# Fire 5 min after the hour boundary so GMVMAX period reports have time to
-# settle. Hour-edge data is eventually-consistent — Shop / Ads counters
-# backfill for several minutes, so a *:00 trigger sees stale numbers and
-# produces phantom ROI swings. Empirically validated against NAD+ surge
-# 2026-04-10 timeline where hour-boundary snapshots showed 108v/0 orders
-# that backfilled to 397v/6 orders in the next window.
-OnCalendar=*:05,35:00
+# Fire 15 min after hour/half-hour boundaries. Two constraints:
+#   1. Eventually-consistent API data: the :00 and :30 marks are common
+#      GMVMAX / Shop counter refresh boundaries, so a trigger there
+#      sees stale numbers and produces phantom ROI swings. Empirically
+#      validated against NAD+ surge 2026-04-10 (108v/0 orders at the
+#      hour edge backfilled to 397v/6 orders in the next window).
+#   2. No overlap with hourly-jobs.timer at *:00 — ban_alert + ad_report
+#      + balance_alert take ~90-150s and peak ~150MB on a 225MB-available
+#      VPS. Keeping gmvmax-monitor at :15/:45 gives a 15-min memory
+#      breathing window on both sides of the hourly run.
+# :15/:45 is strictly better than :05/:35 for the API-boundary reason
+# and was picked over :10/:40 because it's equidistant from :00/:30.
+OnCalendar=*:15,45:00
 Persistent=true
 
 [Install]
