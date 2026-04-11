@@ -1,0 +1,87 @@
+name: Deploy systemd units to VPS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/*.service'
+      - 'deploy/*.timer'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-systemd
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload unit files to VPS /tmp/deploy-systemd/
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy/*.service,deploy/*.timer"
+          target: "/tmp/deploy-systemd-staging/"
+          strip_components: 1
+          rm: true
+
+      - name: Diff + install + daemon-reload + restart changed timers
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            STAGE=/tmp/deploy-systemd-staging
+            TARGET=/etc/systemd/system
+            changed_timers=()
+            changed_any=0
+
+            shopt -s nullglob
+            for src in "$STAGE"/*.service "$STAGE"/*.timer; do
+              name=$(basename "$src")
+
+              # Skip daemon services owned by lark-bot/deploy.yml — they're
+              # long-running processes restarted by the app deploy pipeline.
+              case "$name" in
+                lark-bot-ws.service|tiktok-gateway.service)
+                  echo "skip (lark-bot daemon): $name"
+                  continue
+                  ;;
+              esac
+
+              dst="$TARGET/$name"
+              if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
+                echo "unchanged: $name"
+                continue
+              fi
+
+              echo "install:   $name"
+              sudo install -m 0644 -o root -g root "$src" "$dst"
+              changed_any=1
+              case "$name" in
+                *.timer) changed_timers+=("$name") ;;
+              esac
+            done
+
+            if [ "$changed_any" -eq 0 ]; then
+              echo "no changes, nothing to reload"
+              exit 0
+            fi
+
+            sudo systemctl daemon-reload
+            echo "daemon-reload OK"
+
+            for t in "${changed_timers[@]}"; do
+              sudo systemctl restart "$t"
+              sudo systemctl is-active --quiet "$t" \
+                && echo "restart OK: $t" \
+                || { echo "restart FAILED: $t"; exit 1; }
+            done
+
+            echo "Deploy systemd OK"
