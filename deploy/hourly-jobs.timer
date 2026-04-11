@@ -2,10 +2,13 @@
 Description=Hourly jobs trigger (ban_alert + ad_report + balance_alert)
 
 [Timer]
-# Fire exactly at the top of every hour. ad_report keeps the historic
-# on-the-hour cadence operators expect. ban_alert runs just before it,
-# balance_alert just after — see hourly-jobs.service ExecStart order.
-OnCalendar=*:00:00
+# Fire at :58 so that after ban_alert (~10-20s) + ad_report data
+# collection (~30-60s before the push), the ad_report Feishu card
+# lands at ~:00 — the historic on-the-hour cadence operators expect.
+# Mirrors the previous cron-job.org → GH Actions timing (:58 trigger
+# → ~:00 push). If empirical push time drifts earlier than :00,
+# nudge this toward :59:00.
+OnCalendar=*:58:00
 Persistent=true
 
 [Install]

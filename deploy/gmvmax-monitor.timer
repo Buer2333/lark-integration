@@ -9,10 +9,11 @@ Description=GMVMAX Monitor Timer (every 30min, offset +15min)
 #      sees stale numbers and produces phantom ROI swings. Empirically
 #      validated against NAD+ surge 2026-04-10 (108v/0 orders at the
 #      hour edge backfilled to 397v/6 orders in the next window).
-#   2. No overlap with hourly-jobs.timer at *:00 — ban_alert + ad_report
+#   2. No overlap with hourly-jobs.timer at *:58 — ban_alert + ad_report
 #      + balance_alert take ~90-150s and peak ~150MB on a 225MB-available
-#      VPS. Keeping gmvmax-monitor at :15/:45 gives a 15-min memory
-#      breathing window on both sides of the hourly run.
+#      VPS. Keeping gmvmax-monitor at :15/:45: the :45 run finishes by
+#      ~:46 (12-min gap before :58), and :15 fires 15+ min after
+#      hourly-jobs winds down (~:59:30). Plenty of memory breathing room.
 # :15/:45 is strictly better than :05/:35 for the API-boundary reason
 # and was picked over :10/:40 because it's equidistant from :00/:30.
 OnCalendar=*:15,45:00
