@@ -1,8 +1,14 @@
 [Unit]
-Description=GMVMAX Monitor Timer (every 30min)
+Description=GMVMAX Monitor Timer (every 30min, offset +5min)
 
 [Timer]
-OnCalendar=*:00,30:00
+# Fire 5 min after the hour boundary so GMVMAX period reports have time to
+# settle. Hour-edge data is eventually-consistent — Shop / Ads counters
+# backfill for several minutes, so a *:00 trigger sees stale numbers and
+# produces phantom ROI swings. Empirically validated against NAD+ surge
+# 2026-04-10 timeline where hour-boundary snapshots showed 108v/0 orders
+# that backfilled to 397v/6 orders in the next window.
+OnCalendar=*:05,35:00
 Persistent=true
 
 [Install]
