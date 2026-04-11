@@ -92,6 +92,9 @@ gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo install -m 0644 -o
 | 2026-04-11 | 手动 `scp` + `daemon-reload` `gmvmax-monitor.timer` 从 `*:00,30` → `*:05,35` | 1529d7b commit 后暴露 lark-integration 无自动部署，drift 2 天 |
 | 2026-04-11 | 在 lark-integration repo 配置 `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` secrets | 新增 `deploy-systemd.yml` 需要 SSH 到 VPS；key 复用 `~/.ssh/google_compute_engine` |
 | 2026-04-11 | 启动 hourly-jobs VPS ↔ GH Actions 双跑观察窗口 | Phase C 迁移 hourly-jobs 到 VPS systemd。Cron-job.org `hourly-trigger` 仍在 :58 触发 GH Actions（pause 待 C4），VPS `hourly-jobs.timer` 在 `:00` 触发。观察 3 个整点（13:00/14:00/15:00 UTC）两侧推送内容一致后关停 GH Actions 侧。 |
+| 2026-04-11 13:00 UTC | **VPS 首次 hourly-jobs 数据 drift 事故** — `sudo systemctl stop && disable hourly-jobs.timer` | 首次 VPS 运行时 `~/.cache/lark-bot` 缺失 GH Actions 的累积状态：`account_discovery.json` 17k (vs GH 207k)、`balance_snapshot.json` 4k (vs 94k)、`ban_status.json` 13k (vs 15k，缺 ~8 条历史封户)、`ad_cost.json` 150k (vs 218k，缺封户历史消耗)。结果：47 个 cached-banned 重新推送到飞书（误报），ad_report 消耗 ~$804 ≈ GH Actions $1.6k 的一半。立即停 timer 防止 14:00 UTC 再次误推。 |
+| 2026-04-11 13:30 UTC | 通过一次性 `dump-cache.yml` workflow 提取 GH Actions `~/.cache/lark-bot` 并 scp 到 VPS 覆盖 5 个核心文件（`ban_status`/`ad_cost`/`balance_snapshot`/`account_discovery`/`shop_gmv`），保留 VPS 本地的 `gmvmax_snapshot_*.json` | VPS 从未运行过 `hourly-jobs` 所以没有累积状态，gmvmax-monitor 只维护自己的 per-advertiser 快照。备份存于 `~/.cache/lark-bot.bak-pre-gh-restore/`。用 `FEISHU_ENV=test` 手动跑一遍三个 job 验证：`18 active, 47 cached-banned, 0 newly banned` 完全对齐 GH Actions，ad_report 总 Cost ~$1,938 回到正确量级。 |
+| 2026-04-11 13:45 UTC | `sudo systemctl enable --now hourly-jobs.timer` 恢复 | 测试群验证通过，cache 对齐完成。14:00 UTC 起恢复 VPS ↔ GH Actions 双跑观察窗口（原计划被事故中断）。dump-cache.yml 留作一次性工具，C4 时删除。 |
 
 ## 相关仓库
 
