@@ -1,0 +1,90 @@
+# lark-integration — VPS 运行时 + 调度基础设施
+
+## 职责边界（改动前先看这里）
+
+lark-integration 回答一个问题：**"lark-bot 怎么在 VPS 上跑 / 谁定时踢它"**。
+lark-bot 回答另一个问题：**"job 做什么"**。
+
+### 改动归属速查
+
+| 改动类型 | 归属仓库 |
+|---|---|
+| `*.service` / `*.timer` systemd unit | **lark-integration**（本仓库） |
+| VPS bootstrap / 运维脚本（`setup-server.sh` / `health-check.sh` / `deploy-service.sh`） | **lark-integration** |
+| cron-job.org 或外部调度指向的 `repository_dispatch` workflow | **lark-integration** |
+| VPS sudoers 配置、手动 `systemctl` 操作 | **lark-integration**（记在下方"VPS 手动操作日志"） |
+| `.py` 业务逻辑 / 新 job 的 Python 实现 | **lark-bot** |
+| 应用级 CI（跑 pytest / SSH 部署 Python 代码） | **lark-bot** |
+
+### 常见耦合场景
+
+- **新 job + 定时跑** → lark-bot 加 `jobs/new_job.py` + 注册 `run.py`；lark-integration 加 `deploy/new-job.{service,timer}`
+- **只改频率** → 只改本仓库的 `.timer` OnCalendar
+- **只改 job 行为/输出** → 只改 lark-bot 的 Python 代码
+
+### 强制约束
+
+`.github/workflows/boundary-check.yml` 有 guard：本仓库出现任何 `*.py` → CI 红。
+lark-bot 有对称 guard：出现任何 `*.service` / `*.timer` → CI 红。
+历史教训：2026-04-09 lark-bot/deploy/ 和 2026-04-10 lark-integration/deploy/ 两边各存一份 `gmvmax-monitor.timer`，两天后 drift 暴露。孤儿已于 2026-04-11 清理。
+
+---
+
+## 项目定位
+
+**类型：调度/运行时基础设施仓库（无 Python 业务代码）**
+
+### 三大子职责
+
+1. **systemd 运行时契约**（`deploy/*.service` + `*.timer`）
+   定义 lark-bot 的每个 job 在 VPS 上怎么被启动、以哪个用户、哪个工作目录、哪个 env 文件、哪个频率。VPS 上 `/etc/systemd/system/` 的 unit 文件应该与本仓库 `deploy/` **逐字节一致**。
+
+2. **VPS bootstrap / 运维脚本**
+   - `setup-server.sh` — 一次性 bootstrap（git clone、venv、systemd enable 等）
+   - `health-check.sh` — 运维健康检查
+   - `deploy-service.sh` — 手动推送单个 unit 文件到 VPS 的辅助脚本
+
+3. **外部调度触发器 workflow**
+   - `.github/workflows/hourly-jobs.yml` — cron-job.org → `repository_dispatch` → checkout lark-bot 跑 ban_alert+ad_report+balance_alert（**计划迁移到 VPS systemd**）
+   - `.github/workflows/nad-material-report.yml` — 事件驱动，飞书 `/report` 指令触发（不迁移）
+   - `.github/workflows/video-transcribe.yml` — 事件驱动 + whisper/ffmpeg 重资源（永久保留 GH Actions，VPS e2-micro 容量不够）
+
+## 部署流程
+
+### 当前状态（2026-04-11）
+
+- **Python 代码** → lark-bot 的 `deploy.yml` 自动 SSH pull + 重启服务，闭环
+- **systemd unit 文件** → 暂无自动部署，改了 `deploy/*.timer` 必须手动 `scp` 到 VPS + `sudo systemctl daemon-reload`
+- **规划**：为本仓库新增 `deploy-systemd.yml`，监听 `deploy/*.{service,timer}` 变更自动同步 VPS（Phase B）
+
+### 手动同步命令（Phase B 上线前）
+
+```bash
+gcloud compute scp deploy/xxx.timer lark-bot:/tmp/ --zone=us-west1-b
+gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo cp /tmp/xxx.timer /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl restart xxx.timer"
+```
+
+## VPS 手动操作日志
+
+> 任何 sudoers 调整、非自动化的 systemd 操作、一次性配置变更都记在这里。避免"只存在于人脑里"的知识。
+
+| 日期 | 操作 | 原因 |
+|---|---|---|
+| 2026-04-11 | 手动 `scp` + `daemon-reload` `gmvmax-monitor.timer` 从 `*:00,30` → `*:05,35` | 1529d7b commit 后暴露 lark-integration 无自动部署，drift 2 天 |
+
+## 相关仓库
+
+- [lark-bot](https://github.com/Buer2333/lark-bot) — Python 业务代码、MCP Server、应用 CI/CD
+
+## 常用命令
+
+```bash
+# VPS 查看 timer 列表
+gcloud compute ssh lark-bot --zone=us-west1-b --command="systemctl list-timers"
+
+# VPS 查看某 job 最近日志
+gcloud compute ssh lark-bot --zone=us-west1-b --command="journalctl -u gmvmax-monitor.service -n 100"
+
+# VPS 手动触发一次 job（不等 timer）
+gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo systemctl start gmvmax-monitor.service"
+```
