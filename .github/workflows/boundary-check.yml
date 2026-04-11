@@ -1,0 +1,25 @@
+name: Boundary Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  no-python-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No Python code in lark-integration
+        run: |
+          FOUND=$(find . -type f -name '*.py' -not -path './.git/*')
+          if [ -n "$FOUND" ]; then
+            echo "ERROR: Python code belongs in lark-bot, not lark-integration"
+            echo "$FOUND"
+            echo ""
+            echo "lark-integration owns systemd units + VPS scripts + scheduling workflows."
+            echo "Move Python files to Buer2333/lark-bot (core/ or jobs/)."
+            exit 1
+          fi
+          echo "OK: no Python code in lark-integration"
