@@ -45,7 +45,7 @@ lark-bot 有对称 guard：出现任何 `*.service` / `*.timer` → CI 红。
    - `deploy-service.sh` — 手动推送单个 unit 文件到 VPS 的辅助脚本
 
 3. **外部调度触发器 workflow**
-   - `.github/workflows/hourly-jobs.yml` — cron-job.org → `repository_dispatch` → checkout lark-bot 跑 ban_alert+ad_report+balance_alert（**计划迁移到 VPS systemd**）
+   - ~~`.github/workflows/hourly-jobs.yml`~~ — 已于 2026-04-11 15:58 UTC 删除，hourly jobs 完全由 VPS `hourly-jobs.timer` 承担
    - `.github/workflows/nad-material-report.yml` — 事件驱动，飞书 `/report` 指令触发（不迁移）
    - `.github/workflows/video-transcribe.yml` — 事件驱动 + whisper/ffmpeg 重资源（永久保留 GH Actions，VPS e2-micro 容量不够）
 
@@ -95,6 +95,7 @@ gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo install -m 0644 -o
 | 2026-04-11 13:00 UTC | **VPS 首次 hourly-jobs 数据 drift 事故** — `sudo systemctl stop && disable hourly-jobs.timer` | 首次 VPS 运行时 `~/.cache/lark-bot` 缺失 GH Actions 的累积状态：`account_discovery.json` 17k (vs GH 207k)、`balance_snapshot.json` 4k (vs 94k)、`ban_status.json` 13k (vs 15k，缺 ~8 条历史封户)、`ad_cost.json` 150k (vs 218k，缺封户历史消耗)。结果：47 个 cached-banned 重新推送到飞书（误报），ad_report 消耗 ~$804 ≈ GH Actions $1.6k 的一半。立即停 timer 防止 14:00 UTC 再次误推。 |
 | 2026-04-11 13:30 UTC | 通过一次性 `dump-cache.yml` workflow 提取 GH Actions `~/.cache/lark-bot` 并 scp 到 VPS 覆盖 5 个核心文件（`ban_status`/`ad_cost`/`balance_snapshot`/`account_discovery`/`shop_gmv`），保留 VPS 本地的 `gmvmax_snapshot_*.json` | VPS 从未运行过 `hourly-jobs` 所以没有累积状态，gmvmax-monitor 只维护自己的 per-advertiser 快照。备份存于 `~/.cache/lark-bot.bak-pre-gh-restore/`。用 `FEISHU_ENV=test` 手动跑一遍三个 job 验证：`18 active, 47 cached-banned, 0 newly banned` 完全对齐 GH Actions，ad_report 总 Cost ~$1,938 回到正确量级。 |
 | 2026-04-11 13:45 UTC | `sudo systemctl enable --now hourly-jobs.timer` 恢复 | 测试群验证通过，cache 对齐完成。14:00 UTC 起恢复 VPS ↔ GH Actions 双跑观察窗口（原计划被事故中断）。dump-cache.yml 留作一次性工具，C4 时删除。 |
+| 2026-04-11 15:58 UTC | **双跑窗口被 TikTok token 限流打碎** — 紧急跳到 C4 | VPS 15:58:04 起跑，GH Actions 15:58:00 起 repository_dispatch，两边用同一套 `TIKTOK_ACCESS_TOKEN_XINCHENG/ZECHENG`。TikTok 40100 "Too many requests" 是 **per-token** 限流不看 IP，两条并发链路互相打 → 两边各 13-14 次 API 失败 → 生成的 ad_report 卡片数据崩掉（FlyNew-US-Shilajit MTD Cost $3.42 / ROI 16272、Hiileathy-US-Shilajit Today Cost $34 / ROI 157）。原 Plan C "双跑观察 3 小时再切" 的假设是错的 —— 之前没把 TikTok API token-level 限流考虑进去。决定：立即删 `hourly-jobs.yml` + `dump-cache.yml`（即使 cron-job.org 继续 fire，workflow 不存在 repository_dispatch 就空触发），cron-job.org 那侧的 pause 留给用户 UI 操作。 |
 
 ## 相关仓库
 
