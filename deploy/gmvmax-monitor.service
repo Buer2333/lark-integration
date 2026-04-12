@@ -9,4 +9,9 @@ WorkingDirectory=/home/shining/services/lark-bot
 ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py gmvmax_monitor --today
 Environment=PATH=/home/shining/services/lark-bot/.venv/bin:/usr/bin
 EnvironmentFile=/home/shining/services/lark-bot/.env
-TimeoutStartSec=300
+# 10 min budget. 5 min was chronically tight: normal 30-min-delta runs
+# take 4-5 min, and any snapshot staleness (drought, timeout, first run)
+# pushes past 5 min — starving groups dispatched last. With stalest-first
+# dispatch in gmvmax_monitor.py the extra headroom lets starved groups
+# catch up without killing the service.
+TimeoutStartSec=600
