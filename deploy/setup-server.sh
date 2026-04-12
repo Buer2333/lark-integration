@@ -57,7 +57,13 @@ echo "=== [5/6] Install runtime dependencies ==="
 apt-get install -y -qq python3 python3-venv python3-pip ffmpeg git curl
 echo "Runtime deps installed"
 
-echo "=== [6/6] Sudoers for deploy user ==="
+echo "=== [6/7] Journal rotation ==="
+mkdir -p /etc/systemd/journald.conf.d
+cp deploy/journald-larkbot.conf /etc/systemd/journald.conf.d/ 2>/dev/null || true
+systemctl restart systemd-journald 2>/dev/null || true
+echo "Journal capped at 500M / 30 days"
+
+echo "=== [7/7] Sudoers for deploy user ==="
 cat > /etc/sudoers.d/deploy-lark-bot <<EOF
 deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart lark-bot-ws
 deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop lark-bot-ws

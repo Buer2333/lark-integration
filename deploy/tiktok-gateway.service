@@ -10,6 +10,8 @@ WorkingDirectory=/home/shining/services/lark-bot
 ExecStart=/home/shining/services/lark-bot/.venv/bin/python -m gateway
 Restart=always
 RestartSec=10
+KillMode=mixed
+TimeoutStopSec=15
 StartLimitIntervalSec=300
 StartLimitBurst=10
 Environment=PYTHONUNBUFFERED=1
