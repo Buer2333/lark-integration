@@ -33,4 +33,5 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=material-report
+MemoryMax=200M
 NoNewPrivileges=true

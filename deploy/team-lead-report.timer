@@ -1,8 +1,11 @@
 [Unit]
-Description=Team Lead Daily Report Timer (18:20 CST)
+Description=Team Lead Daily Report Timer (18:40 CST)
 
 [Timer]
-OnCalendar=*-*-* 10:20:00 UTC
+# Moved from 10:20 to 10:40 to avoid pile-up with material-report (10:00)
+# + gmvmax-monitor (10:15). 2026-04-12 OOM cascade was caused by 3 daily
+# timers firing within 20min on a 1GB VPS.
+OnCalendar=*-*-* 10:40:00 UTC
 Persistent=true
 
 [Install]

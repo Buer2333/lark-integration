@@ -12,4 +12,5 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=refresh-tokens
+MemoryMax=100M
 NoNewPrivileges=true

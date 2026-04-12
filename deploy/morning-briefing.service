@@ -12,4 +12,5 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=morning-briefing
+MemoryMax=150M
 NoNewPrivileges=true
