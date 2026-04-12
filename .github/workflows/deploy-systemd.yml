@@ -6,6 +6,7 @@ on:
     paths:
       - 'deploy/*.service'
       - 'deploy/*.timer'
+      - 'deploy/*.conf'
   workflow_dispatch:
 
 concurrency:
@@ -24,7 +25,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy/*.service,deploy/*.timer"
+          source: "deploy/*.service,deploy/*.timer,deploy/*.conf"
           target: "/tmp/deploy-systemd-staging/"
           strip_components: 1
           rm: true
@@ -42,19 +43,13 @@ jobs:
             changed_timers=()
             changed_any=0
 
+            # Daemon services: install unit file (daemon-reload picks up changes)
+            # but do NOT restart — next lark-bot app deploy restarts them.
+            DAEMON_SERVICES="lark-bot-ws.service tiktok-gateway.service"
+
             shopt -s nullglob
             for src in "$STAGE"/*.service "$STAGE"/*.timer; do
               name=$(basename "$src")
-
-              # Skip daemon services owned by lark-bot/deploy.yml — they're
-              # long-running processes restarted by the app deploy pipeline.
-              case "$name" in
-                lark-bot-ws.service|tiktok-gateway.service)
-                  echo "skip (lark-bot daemon): $name"
-                  continue
-                  ;;
-              esac
-
               dst="$TARGET/$name"
               if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
                 echo "unchanged: $name"
@@ -64,9 +59,31 @@ jobs:
               echo "install:   $name"
               sudo install -m 0644 -o root -g root "$src" "$dst"
               changed_any=1
+
+              # Only restart timers (oneshot triggers).
+              # Daemon services get daemon-reload but no restart.
               case "$name" in
                 *.timer) changed_timers+=("$name") ;;
               esac
+              case " $DAEMON_SERVICES " in
+                *" $name "*) echo "  (daemon — no restart, effective on next app deploy)" ;;
+              esac
+            done
+
+            # Deploy journald / other conf drop-ins
+            for src in "$STAGE"/*.conf; do
+              name=$(basename "$src")
+              dst="/etc/systemd/journald.conf.d/$name"
+              sudo mkdir -p /etc/systemd/journald.conf.d
+              if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
+                echo "unchanged: $name"
+                continue
+              fi
+              echo "install:   $name → journald.conf.d/"
+              sudo install -m 0644 -o root -g root "$src" "$dst"
+              changed_any=1
+              sudo systemctl restart systemd-journald
+              echo "journald restarted"
             done
 
             if [ "$changed_any" -eq 0 ]; then
