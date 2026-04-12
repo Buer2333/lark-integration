@@ -23,4 +23,7 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=hourly-jobs
 TimeoutStartSec=600
+# OOM guard: kill this job rather than let it starve sshd + lark-bot-ws.
+# Normal peak ~180MB (ad_report). 250M gives 40% headroom.
+MemoryMax=250M
 NoNewPrivileges=true

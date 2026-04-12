@@ -15,3 +15,6 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 # dispatch in gmvmax_monitor.py the extra headroom lets starved groups
 # catch up without killing the service.
 TimeoutStartSec=600
+# OOM guard: kill this job rather than let it starve sshd + lark-bot-ws.
+# Normal peak ~100MB. 200M gives generous headroom.
+MemoryMax=200M
