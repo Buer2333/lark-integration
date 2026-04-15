@@ -1,0 +1,16 @@
+[Unit]
+Description=Editor Audit Report (GMV Max creative_delivery_status per item)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py editor_audit_report --today
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=editor-audit-report
+MemoryMax=150M
+NoNewPrivileges=true
