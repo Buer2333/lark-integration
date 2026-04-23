@@ -2,10 +2,12 @@
 Description=Team Lead Daily Report — 17:00 V1 preview (CST)
 
 [Timer]
-# 17:00 CST = 09:00 UTC. V1 initial version — surfaces editor_map gap
+# 17:10 CST = 09:10 UTC. V1 initial version — surfaces editor_map gap
 # and 自然流 Bitable filling progress to let leads guide their team
 # to 补录 before the 18:20 final push.
-OnCalendar=*-*-* 09:00:00 UTC
+# 10-min offset from refresh-tokens.timer (09:00 UTC) avoids race where
+# preview reads shops.json mid-refresh and hits 105002 Expired token.
+OnCalendar=*-*-* 09:10:00 UTC
 Persistent=true
 
 [Install]

@@ -1,6 +1,6 @@
 [Unit]
-Description=Team Lead Daily Report V1 Preview (17:00 CST, early signal)
-After=network-online.target
+Description=Team Lead Daily Report V1 Preview (17:10 CST, early signal)
+After=network-online.target refresh-tokens.service
 Wants=network-online.target
 
 [Service]
