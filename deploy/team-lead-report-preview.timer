@@ -1,0 +1,12 @@
+[Unit]
+Description=Team Lead Daily Report — 17:00 V1 preview (CST)
+
+[Timer]
+# 17:00 CST = 09:00 UTC. V1 initial version — surfaces editor_map gap
+# and 自然流 Bitable filling progress to let leads guide their team
+# to 补录 before the 18:20 final push.
+OnCalendar=*-*-* 09:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
