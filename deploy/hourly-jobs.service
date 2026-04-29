@@ -8,22 +8,26 @@ Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
 EnvironmentFile=/home/shining/services/lark-bot/.env
-# Run all three sequentially, but never let one failure block the next.
-# Matches the semantics of the old GH Actions workflow which used
-# `if: ${{ always() }}` on ad_report and balance_alert. Each job already
-# reports its own errors to Feishu, so we swallow non-zero here.
-# ban_alert intentionally runs first so any freshly banned ad accounts
-# are reflected in ad_report's subsequent data fetch.
-ExecStart=/bin/bash -c 'set +e; \
-  .venv/bin/python run.py ban_alert; \
-  .venv/bin/python run.py ad_report; \
-  .venv/bin/python run.py balance_alert; \
-  exit 0'
+# Run ban_alert → ad_report → balance_alert in a single Python process.
+# Previously this was three subprocesses behind `bash -c 'set +e; …'`,
+# each re-running bootstrap.init() (~30s bitable load + tz cache + mcp
+# client). Single-process reuses bootstrap state and the in-memory
+# ban_status_cache singleton (so ban_alert → ad_report sees fresh bans
+# without disk roundtrip), saving ~60s per timer firing.
+#
+# Order matches the previous bash chain. Each step is still error-
+# isolated by run_with_error_fallback inside run.py — a failure pushes
+# an alert card to Shining Inbox and the next step continues. run.py
+# exits non-zero only if at least one step failed (better signal than
+# the old `exit 0` which hid all errors from systemd).
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python /home/shining/services/lark-bot/run.py hourly
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=hourly-jobs
 TimeoutStartSec=600
 # OOM guard: kill this job rather than let it starve sshd + lark-bot-ws.
-# Normal peak ~180MB (ad_report). 250M gives 40% headroom.
-MemoryMax=250M
+# Single process holds three jobs' state; bumped 250M → 320M to give
+# headroom for ad_report (~180M peak alone) plus ban_alert's discovery
+# cache + balance_alert's snapshot map living in the same heap.
+MemoryMax=320M
 NoNewPrivileges=true
