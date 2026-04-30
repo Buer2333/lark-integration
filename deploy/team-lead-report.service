@@ -12,5 +12,5 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=team-lead-report
-MemoryMax=150M
+MemoryMax=300M
 NoNewPrivileges=true
