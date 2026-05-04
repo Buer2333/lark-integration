@@ -106,3 +106,12 @@ jobs:
             done
 
             echo "Deploy systemd OK"
+
+      # NOTE: Feishu deploy-failure notification REMOVED 2026-05-04 after a
+      # leak incident in sister repo lark-bot — FEISHU_WEBHOOK_ID was bound
+      # to 大健康核心群 (customer-facing, external members). This workflow
+      # uses the same secret, so a deploy failure here would have leaked too.
+      # Lesson: CI/Deploy webhooks MUST NOT reuse business-routing webhooks.
+      # If re-enabled, use a dedicated FEISHU_CI_WEBHOOK_ID bound to an
+      # internal-only chat (e.g. Shining Inbox oc_66ec...e6308f).
+      # See lark-bot memory/feedback_ci_webhook_must_be_internal.md
