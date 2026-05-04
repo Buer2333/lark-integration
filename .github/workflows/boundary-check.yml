@@ -32,7 +32,7 @@ jobs:
         # See lark-bot memory/feedback_ci_webhook_must_be_internal.md
         run: |
           # Pattern 1: actual webhook URL (requires https:// scheme)
-          # Pattern 2: actual secret interpolation in workflow (${{ secrets.FEISHU_*WEBHOOK* }})
+          # Pattern 2: secret interpolation matching FEISHU_*WEBHOOK* secret name
           PATTERN='https://[^"/[:space:]]*open\.feishu\.cn/open-apis/bot/v2/hook|\$\{\{ *secrets\.FEISHU_[A-Z_]*WEBHOOK'
           MATCHES=$(grep -rEn "$PATTERN" .github/workflows/ || true)
           if [ -n "$MATCHES" ]; then
