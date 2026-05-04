@@ -23,3 +23,26 @@ jobs:
             exit 1
           fi
           echo "OK: no Python code in lark-integration"
+
+      - name: No direct Feishu webhook in workflows
+        # 2026-05-04 incident in sister repo lark-bot: a CI failure-notification
+        # step pushed an internal commit message to a customer-facing chat.
+        # Direct webhook usage in workflows bypasses core.feishu's FEISHU_ENV
+        # test/prod gating — the only real safety net.
+        # See lark-bot memory/feedback_ci_webhook_must_be_internal.md
+        run: |
+          # Pattern 1: actual webhook URL (requires https:// scheme)
+          # Pattern 2: actual secret interpolation in workflow (${{ secrets.FEISHU_*WEBHOOK* }})
+          PATTERN='https://[^"/[:space:]]*open\.feishu\.cn/open-apis/bot/v2/hook|\$\{\{ *secrets\.FEISHU_[A-Z_]*WEBHOOK'
+          MATCHES=$(grep -rEn "$PATTERN" .github/workflows/ || true)
+          if [ -n "$MATCHES" ]; then
+            echo "ERROR: workflow contains direct Feishu webhook usage."
+            echo "$MATCHES"
+            echo ""
+            echo "Direct curl bypasses core.feishu env-gating (FEISHU_ENV)."
+            echo "Route notifications through VPS push pipeline, OR use a"
+            echo "dedicated FEISHU_CI_WEBHOOK_ID bound to an internal-only chat."
+            echo "See lark-bot memory/feedback_ci_webhook_must_be_internal.md"
+            exit 1
+          fi
+          echo "OK: no direct Feishu webhook in workflows"
