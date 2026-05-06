@@ -40,10 +40,13 @@ jobs:
           sudo apt-get update && sudo apt-get install -y ffmpeg
           pip install -r requirements.txt yt-dlp curl_cffi
 
-      - name: Write cookies file
-        run: echo "$TIKTOK_COOKIES" > /tmp/tiktok_cookies.txt
-        env:
-          TIKTOK_COOKIES: ${{ secrets.TIKTOK_COOKIES }}
+      # NOTE: cookies are NOT injected here. Cookies are personal credentials
+      # maintained as a single source at ~/.config/lark-bot/video-cookies.txt
+      # on the local dev machine, deployed only to the VPS via
+      # `scripts/sync-video-cookies.sh deploy`. This GH Actions path is a
+      # process-level fallback (only triggers when the VPS subprocess fails to
+      # spawn); cookies-required platforms (IG / YouTube logged-in / etc.) will
+      # fail with a clear error here, public TikTok still works cookieless.
 
       - name: Run video_transcribe (dispatch)
         if: ${{ github.event_name == 'repository_dispatch' }}
@@ -51,7 +54,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-          TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
             --url "${{ github.event.client_payload.tiktok_url }}" \
@@ -67,7 +69,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-          TIKTOK_COOKIES_FILE: /tmp/tiktok_cookies.txt
         run: |
           python run.py video_transcribe \
             --url "${{ github.event.inputs.tiktok_url }}" \
