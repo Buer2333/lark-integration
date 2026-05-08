@@ -45,7 +45,7 @@ jobs:
 
             # Daemon services: install unit file (daemon-reload picks up changes)
             # but do NOT restart — next lark-bot app deploy restarts them.
-            DAEMON_SERVICES="lark-bot-ws.service tiktok-gateway.service"
+            DAEMON_SERVICES="lark-bot-ws.service tiktok-gateway.service cuiqiu-mail-watcher.service"
 
             shopt -s nullglob
             for src in "$STAGE"/*.service "$STAGE"/*.timer; do

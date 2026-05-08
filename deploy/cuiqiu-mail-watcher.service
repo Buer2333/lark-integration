@@ -1,0 +1,25 @@
+[Unit]
+Description=Cuiqiu Mail Watcher (IMAP IDLE → Feishu group push)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python -m cuiqiu_mail_watcher
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=15
+StartLimitIntervalSec=300
+StartLimitBurst=10
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cuiqiu-mail-watcher
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
