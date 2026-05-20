@@ -1,0 +1,11 @@
+[Unit]
+Description=Proxy infrastructure renewal check — twice monthly (1st + 15th) at 09:00 ET
+
+[Timer]
+# Fires on the 1st and 15th of each month at 09:00 America/New_York (DST-aware).
+# Reminder card → Shining Inbox (see jobs/proxy_renewal_check.py).
+OnCalendar=*-*-01,15 09:00:00 America/New_York
+Persistent=true
+
+[Install]
+WantedBy=timers.target

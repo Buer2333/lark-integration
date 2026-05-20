@@ -1,0 +1,16 @@
+[Unit]
+Description=Proxy infrastructure renewal check (Vultr / GCP / IPRoyal reminder)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py proxy_renewal_check
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=proxy-renewal-check
+MemoryMax=100M
+NoNewPrivileges=true
