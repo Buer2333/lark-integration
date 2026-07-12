@@ -1,0 +1,28 @@
+# video-gen web app (lark-bot phase-2) — reverse proxy + TLS.
+# Deployed at /etc/caddy/Caddyfile on the lark-bot VPS (GCP us-west1-b).
+# Installed manually 2026-07-12 (apt caddy 2.6.2); this file is the source
+# of truth — after editing, copy to the VPS and `systemctl reload caddy`.
+#
+# Port layout on this VPS:
+#   443  = xray (TikTok proxy node) — NOT ours, never bind
+#   80   = Caddy: ACME HTTP-01 challenges + redirect to :8443
+#   8443 = Caddy: TLS site → reverse_proxy to the web thread inside
+#          lark-bot-ws (127.0.0.1:$VIDEO_GEN_WEB_PORT) once phase-2 ships
+# GCP firewall rule: allow-video-web (tcp:80,8443). Rollback: delete rule
+# and/or `systemctl stop caddy` — the bot is unaffected either way.
+{
+	http_port 80
+	https_port 8443
+}
+
+# explicit :80 redirect (Caddy 2.6 auto-redirect omits the custom https_port)
+http://video.hiileathy.com {
+	redir https://video.hiileathy.com:8443{uri} permanent
+}
+
+video.hiileathy.com {
+	# placeholder until the webapp ships (phase-2 step 7 switches this to:
+	#   request_body { max_size 8MB }
+	#   reverse_proxy 127.0.0.1:{$VIDEO_GEN_WEB_PORT}
+	respond "video-gen web: not deployed yet" 200
+}
