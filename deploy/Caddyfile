@@ -21,8 +21,9 @@ http://video.hiileathy.com {
 }
 
 video.hiileathy.com {
-	# placeholder until the webapp ships (phase-2 step 7 switches this to:
-	#   request_body { max_size 8MB }
-	#   reverse_proxy 127.0.0.1:{$VIDEO_GEN_WEB_PORT}
-	respond "video-gen web: not deployed yet" 200
+	request_body {
+		max_size 8MB
+	}
+	# = VIDEO_GEN_WEB_PORT in lark-bot .env (uvicorn thread inside lark-bot-ws)
+	reverse_proxy 127.0.0.1:8899
 }
