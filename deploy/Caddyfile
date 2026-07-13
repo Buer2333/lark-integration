@@ -22,7 +22,9 @@ http://video.hiileathy.com {
 
 video.hiileathy.com {
 	request_body {
-		max_size 8MB
+		# i2v source images from phones can hit 10-20MB (high-res / portrait).
+		# 8MB rejected a real 8.9MB upload as 413→502 (T-20260713-004).
+		max_size 25MB
 	}
 	# = VIDEO_GEN_WEB_PORT in lark-bot .env (uvicorn thread inside lark-bot-ws)
 	reverse_proxy 127.0.0.1:8899
