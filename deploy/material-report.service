@@ -7,7 +7,16 @@ Wants=network-online.target
 Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
+# 窗口护栏（2026-08-07 事故，机器强制）：排程 10:00 UTC；只允许 [10:00,14:00) UTC
+# 内执行，窗口外（Persistent 补跑残留/误触 systemctl start/错时手动）直接拒跑
+# exit 0——因为 ET "yesterday" 只在此窗口内等于正确的 T-1，窗口外会推错日期。
+# 带参数的手动补推不受影响（那走 run.py 直调，不经本 unit）。
 ExecStart=/bin/bash -c '\
+  H=$(date -u +%%H) && \
+  if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then \
+    echo "[guard] refusing to run outside 10:00-14:00 UTC window (now ${H}:xx UTC) — anti mis-fire, see 2026-08-07 incident"; \
+    exit 0; \
+  fi && \
   YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && \
   .venv/bin/python run.py material_report \
     --product-group Hiileathy-US-NAD+ \

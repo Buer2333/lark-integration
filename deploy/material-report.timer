@@ -3,7 +3,11 @@ Description=Daily Material Report Timer (18:00 CST)
 
 [Timer]
 OnCalendar=*-*-* 10:00:00 UTC
-Persistent=true
+# Persistent 移除（2026-08-07 事故）：unit 下发流程 restart timer 时 Persistent
+# 触发补跑——03:36 UTC 提前推送，且 ET "yesterday" 在该时刻算成 T-2（08-05 而非
+# 08-06），5 个群收到错日期日报。日报错过就等下一班，不补跑；service 侧另有
+# UTC 窗口护栏双保险。
+Persistent=false
 
 [Install]
 WantedBy=timers.target
