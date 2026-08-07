@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily script_library_sync — GMVMAX converting materials → 脚本库 Bitable (after script-collect so manual mappings flow in)
+After=network.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py script_library_sync --product-group FlyNew-US-NMN --days 60
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=script-library-sync
+MemoryMax=150M
+NoNewPrivileges=true

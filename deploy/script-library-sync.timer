@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily script library sync timer (10:15 UTC, 45min after script-collect manual-mapping refresh)
+
+[Timer]
+OnCalendar=*-*-* 10:15:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
