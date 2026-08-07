@@ -7,7 +7,8 @@ Wants=network-online.target
 Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
-ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py morning_briefing --today
+# 窗口护栏（2026-08-07 事故加固）：排程 01:00 UTC；[01:00,05:00) UTC 外拒跑。
+ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 1 ] || [ "$H" -ge 5 ]; then echo "[guard] outside 01-05 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py morning_briefing --today'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal

@@ -7,7 +7,9 @@ Wants=network-online.target
 Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
-ExecStart=/bin/bash -c "YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py daily_report --view lead --date $YESTERDAY --push-to-leads"
+# 窗口护栏（2026-08-07 事故加固）：排程 10:20 UTC；[10:00,14:00) UTC 外拒跑
+# ——该窗口内 ET "yesterday" 才等于正确的 T-1。带参手动补推走引擎直调不受影响。
+ExecStart=/bin/bash -c "H=$(date -u +%%H); if [ \"$H\" -lt 10 ] || [ \"$H\" -ge 14 ]; then echo '[guard] outside 10-14 UTC window, refusing (anti mis-fire)'; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py daily_report --view lead --date $YESTERDAY --push-to-leads"
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal

@@ -8,7 +8,10 @@ Description=Team Lead Daily Report Timer (18:20 CST)
 # cascades return (2026-04-12-style), move this to 10:05 UTC or push
 # gmvmax-monitor off :15.
 OnCalendar=*-*-* 10:20:00 UTC
-Persistent=true
+# Persistent 移除（2026-08-07 material-report 事故同类加固）：unit 下发 restart
+# timer 会触发 Persistent 补跑，在错误时刻推送群报表。错过就等下一班；
+# service 侧另有 UTC 窗口护栏双保险。
+Persistent=false
 
 [Install]
 WantedBy=timers.target

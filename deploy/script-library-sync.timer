@@ -3,6 +3,8 @@ Description=Daily script library sync timer (10:15 UTC, 45min after script-colle
 
 [Timer]
 OnCalendar=*-*-* 10:15:00 UTC
+# Persistent 保留（2026-08-07 评估）：本 job 是 Bitable 幂等同步（--days 60
+# 滚动窗口，无群推送），补跑无害且有益——不属于日报推送类加固范围。
 Persistent=true
 
 [Install]
