@@ -1,0 +1,17 @@
+[Unit]
+Description=TTS Order Push Reconcile (webhook miss/dead backstop)
+After=network.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py tts_order_reconcile
+Environment=PATH=/home/shining/services/lark-bot/.venv/bin:/usr/bin
+EnvironmentFile=/home/shining/services/lark-bot/.env
+# Rolling 72h window over ≤2 whitelisted shops: normal run is a couple of
+# minutes of Order Search pagination. 10 min covers completeness retries.
+TimeoutStartSec=600
+# Same OOM guard rationale as gmvmax-monitor: kill this oneshot rather
+# than starve sshd + lark-bot-ws on the small VPS.
+MemoryMax=200M

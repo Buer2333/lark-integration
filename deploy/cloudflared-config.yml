@@ -1,0 +1,36 @@
+# cloudflared tunnel config — TTS order webhook public entry (standard 443).
+# Mode: LOCALLY-MANAGED (this file is the ingress source of truth; do NOT
+# also configure the tunnel in the Cloudflare dashboard — remotely-managed
+# and locally-managed must not be mixed).
+#
+# Deploy target: /home/shining/.cloudflared/config.yml on the lark-bot VPS
+# (deploy-systemd.yml does NOT handle this file — copy manually like the
+# Caddyfile, header of deploy/Caddyfile documents the same convention).
+#
+# Why a tunnel at all: TikTok Shop webhook callbacks require an HTTPS
+# domain on the standard port — no IPs, no :8443 (Partner Center rule).
+# 443 on this VPS belongs to xray (untouchable), so the only clean 443
+# is Cloudflare's edge; cloudflared dials OUT (no inbound port, no GCP
+# firewall change, origin IP stays unpublished).
+#
+# Placeholders (filled during deployment once the user confirms the
+# Cloudflare-hosted domain — plan S0-1 Go/No-Go):
+#   <TUNNEL_ID>      — from `cloudflared tunnel create tts-order-hook`
+#   tts.<DOMAIN>     — the confirmed hostname
+# The credentials JSON referenced below is created by `tunnel create`,
+# lives ONLY on the VPS (0600) and is never committed anywhere.
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/shining/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # Straight to the uvicorn thread inside lark-bot-ws — NOT via Caddy:
+  # the tunnel to the CF edge is already encrypted, loopback plaintext is
+  # acceptable, and skipping Caddy avoids coupling the webhook path to
+  # video-gen's site config. Body-size limiting lives in the route itself
+  # (webapp/webhooks.py, 64KB double gate) since Caddy's max_size does
+  # not apply on this path.
+  - hostname: tts.<DOMAIN>
+    service: http://127.0.0.1:8899
+  # Everything else that reaches the tunnel gets a hard 404.
+  - service: http_status:404
