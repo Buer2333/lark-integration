@@ -1,0 +1,17 @@
+[Unit]
+# Auto-deployed via .github/workflows/deploy-systemd.yml.
+Description=TTS Order Reconcile Timer (hourly, offset +25min)
+
+[Timer]
+# :25 keeps clear of the existing spikes on this VPS:
+#   *:58 hourly-jobs (ban_alert + ad_report + balance_alert, ~90-150s)
+#   *:15,45 gmvmax-monitor (4-5 min typical)
+# The :25 slot sits between the :15 gmvmax run winding down (~:20) and
+# the :45 one starting — no memory/API-token overlap with either. It is
+# also away from :00/:30 TikTok counter-refresh boundaries (same
+# rationale as gmvmax-monitor's offset).
+OnCalendar=*-*-* *:25:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

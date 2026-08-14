@@ -1,0 +1,23 @@
+[Unit]
+# TTS order webhook public entry — cloudflared tunnel, locally-managed
+# (ingress truth = deploy/cloudflared-config.yml in this repo; never also
+# configure the same tunnel in the Cloudflare dashboard).
+# NOTE: deploy-systemd.yml only syncs *.service/*.timer — the config.yml
+# and the credentials JSON are placed on the VPS manually (see the header
+# of deploy/cloudflared-config.yml).
+Description=cloudflared tunnel (TTS order webhook, outbound-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shining
+ExecStart=/usr/local/bin/cloudflared --no-autoupdate tunnel --config /home/shining/.cloudflared/config.yml run
+Restart=on-failure
+RestartSec=5
+# Long-lived but tiny: cloudflared idles ~30-50MB. Same small-VPS OOM
+# discipline as every other unit here.
+MemoryMax=150M
+
+[Install]
+WantedBy=multi-user.target
