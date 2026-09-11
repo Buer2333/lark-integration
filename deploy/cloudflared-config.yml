@@ -32,5 +32,9 @@ ingress:
   # not apply on this path.
   - hostname: tts.<DOMAIN>
     service: http://127.0.0.1:8899
+  # gpu-video-service API (repo Buer2333/gpu-video-service, systemd gpu-video-api on
+  # 127.0.0.1:8080). Added 2026-09-11; consumers: dj_web_all, later lark-bot.
+  - hostname: gpu-video.<DOMAIN>
+    service: http://127.0.0.1:8080
   # Everything else that reaches the tunnel gets a hard 404.
   - service: http_status:404
