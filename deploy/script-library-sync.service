@@ -11,5 +11,5 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=script-library-sync
-MemoryMax=150M
+MemoryMax=320M
 NoNewPrivileges=true
