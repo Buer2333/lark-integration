@@ -37,7 +37,10 @@ ExecStart=/bin/bash -c '\
   .venv/bin/python run.py material_report \
     --product-group FlyNew-US-Bundle \
     --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_20ccb01affd50aade9ff16a0e714f8d8'
+    --push-chat-id oc_20ccb01affd50aade9ff16a0e714f8d8 && \
+  .venv/bin/python run.py material_report \
+    --product-group Hiileathy-US-NMN \
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY"'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
