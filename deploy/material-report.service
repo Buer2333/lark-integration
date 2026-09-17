@@ -11,6 +11,11 @@ WorkingDirectory=/home/shining/services/lark-bot
 # 内执行，窗口外（Persistent 补跑残留/误触 systemctl start/错时手动）直接拒跑
 # exit 0——因为 ET "yesterday" 只在此窗口内等于正确的 T-1，窗口外会推错日期。
 # 带参数的手动补推不受影响（那走 run.py 直调，不经本 unit）。
+# 2026-09-17 组长→组员维度：末尾 material_dispatch --by-lead 按组织架构表逐组长出跨产品线
+# 小组卡，路由走 chat_routing.json 的 lead:<组长> 键（缺键只告警不回落）；原
+# FlyNew-US-Shilajit --team 汪宇航 一行删除（该组旧卡口径错误，用户 2026-09-17 决定停发）。
+# 用 ; 而非 && 接在最后：公共车道卡任一失败不应连带跳过小组卡。MemoryMax 200M→320M
+# （by-lead 一次拉全车道明细，参考 script-library-sync 212M 峰值）。
 ExecStart=/bin/bash -c '\
   H=$(date -u +%%H) && \
   if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then \
@@ -31,19 +36,16 @@ ExecStart=/bin/bash -c '\
     --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
     --push-chat-id oc_3a8c367358d0ae61ba9fa26f52ba2f86 && \
   .venv/bin/python run.py material_report \
-    --product-group FlyNew-US-Shilajit --team 汪宇航 \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_862abbca825121727d15a75029dbc3a9 && \
-  .venv/bin/python run.py material_report \
     --product-group FlyNew-US-Bundle \
     --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
     --push-chat-id oc_20ccb01affd50aade9ff16a0e714f8d8 && \
   .venv/bin/python run.py material_report \
     --product-group Hiileathy-US-NMN \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY"'
+    --start-date "$YESTERDAY" --end-date "$YESTERDAY" ; \
+  .venv/bin/python run.py material_dispatch --by-lead --date "$YESTERDAY"'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=material-report
-MemoryMax=200M
+MemoryMax=320M
 NoNewPrivileges=true
