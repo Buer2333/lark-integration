@@ -1,15 +1,6 @@
-# video-gen web app (lark-bot phase-2) — reverse proxy + TLS.
-# Deployed at /etc/caddy/Caddyfile on the lark-bot VPS (GCP us-west1-b).
-# Installed manually 2026-07-12 (apt caddy 2.6.2); this file is the source
-# of truth — after editing, copy to the VPS and `systemctl reload caddy`.
-#
-# Port layout on this VPS:
-#   443  = xray (TikTok proxy node) — NOT ours, never bind
-#   80   = Caddy: ACME HTTP-01 challenges + redirect to :8443
-#   8443 = Caddy: TLS site → reverse_proxy to the web thread inside
-#          lark-bot-ws (127.0.0.1:$VIDEO_GEN_WEB_PORT) once phase-2 ships
-# GCP firewall rule: allow-video-web (tcp:80,8443). Rollback: delete rule
-# and/or `systemctl stop caddy` — the bot is unaffected either way.
+# video-gen web app (phase-2). Source of truth: lark-integration deploy/Caddyfile.
+# 443 belongs to xray (proxy node) — Caddy owns 80 (ACME HTTP-01 + redirect)
+# and 8443 (TLS). Rollback: systemctl stop caddy (bot unaffected).
 {
 	http_port 80
 	https_port 8443
@@ -22,9 +13,7 @@ http://video.hiileathy.com {
 
 video.hiileathy.com {
 	request_body {
-		# i2v source images from phones can hit 10-20MB (high-res / portrait).
-		# 8MB rejected a real 8.9MB upload as 413→502 (T-20260713-004).
-		max_size 25MB
+		max_size 80MB
 	}
 	# Public read-only video staging for Instagram Graph API pulls
 	# (jobs/brand_social publisher; dirs are random 16-hex, removed after
@@ -34,7 +23,7 @@ video.hiileathy.com {
 		root * /home/shining/services/lark-bot/data/public/ig
 		file_server
 	}
-	# = VIDEO_GEN_WEB_PORT in lark-bot .env (uvicorn thread inside lark-bot-ws)
+
 	handle {
 		reverse_proxy 127.0.0.1:8899
 	}
