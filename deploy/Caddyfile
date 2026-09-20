@@ -26,6 +26,16 @@ video.hiileathy.com {
 		# 8MB rejected a real 8.9MB upload as 413→502 (T-20260713-004).
 		max_size 25MB
 	}
+	# Public read-only video staging for Instagram Graph API pulls
+	# (jobs/brand_social publisher; dirs are random 16-hex, removed after
+	# writeback_done). Meta must fetch video_url over HTTPS: this host's
+	# https_port is 8443 (443 = xray, never bind). Source dir owned by shining.
+	handle_path /ig/* {
+		root * /home/shining/services/lark-bot/data/public/ig
+		file_server
+	}
 	# = VIDEO_GEN_WEB_PORT in lark-bot .env (uvicorn thread inside lark-bot-ws)
-	reverse_proxy 127.0.0.1:8899
+	handle {
+		reverse_proxy 127.0.0.1:8899
+	}
 }
