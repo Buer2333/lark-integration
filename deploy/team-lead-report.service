@@ -3,6 +3,9 @@ Description=Team Lead Daily Report (private message to leads)
 After=network-online.target
 Wants=network-online.target
 
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）
+OnFailure=unit-failure-alert@%n.service
+
 [Service]
 Type=oneshot
 User=shining
@@ -14,5 +17,14 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=team-lead-report
-MemoryMax=300M
+# 2026-09-20 T-20260919-007 按实测重定：修复后冷跑峰值 296M（memory.current；anon 268M）——
+# 修复前同一天实测 726M/633M，09-17/18 journal 里 300M peak + 296~367M swap peak 与之吻合。
+# MemoryHigh=软限（超过即回收/节流）；MemoryMax=硬顶。10:20 与 material-report(10:00 链)、
+# gmvmax-monitor(10:15) 有重叠：三者实测峰值之和 643M + 常驻最坏 ~1.1G < 2G。
+# 之前 300M 是 e2-micro(1GB)+有 swap 时代定的。
+MemoryHigh=450M
+MemoryMax=600M
+# 禁 swap（2026-09-19 整机僵死加固，原为手工 drop-in 50-noswap.conf；收编进 git 消灭 drift）。
+# 禁了 swap 之后 MemoryMax 必须按「无 swap 也够用」定：见 2026-09-20 T-20260919-007 实测。
+MemorySwapMax=0
 NoNewPrivileges=true

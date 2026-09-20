@@ -2,6 +2,9 @@
 Description=GMVMAX Material Spend Monitor
 After=network.target
 
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）
+OnFailure=unit-failure-alert@%n.service
+
 [Service]
 Type=oneshot
 User=shining
@@ -17,4 +20,11 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 TimeoutStartSec=600
 # OOM guard: kill this job rather than let it starve sshd + lark-bot-ws.
 # Normal peak ~100MB. 200M gives generous headroom.
-MemoryMax=200M
+# 2026-09-20 T-20260919-007 按实测重定：修复后冷跑峰值 141M（memory.current，anon 为主）。
+# MemoryHigh=软限（超过即回收/节流，不杀）≈实测×1.5～1.8；MemoryMax=硬顶≈实测×2.2～2.5。
+# 之前 200M 是 e2-micro(1GB)+有 swap 时代定的，禁 swap 后 anon 超限即 SIGKILL。
+MemoryHigh=250M
+MemoryMax=350M
+# 禁 swap（2026-09-19 整机僵死加固，原为手工 drop-in 50-noswap.conf；收编进 git 消灭 drift）。
+# 禁了 swap 之后 MemoryMax 必须按「无 swap 也够用」定：见 2026-09-20 T-20260919-007 实测。
+MemorySwapMax=0
