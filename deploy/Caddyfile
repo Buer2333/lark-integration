@@ -18,9 +18,11 @@ video.hiileathy.com {
 	# Public read-only video staging for Instagram Graph API pulls
 	# (jobs/brand_social publisher; dirs are random 16-hex, removed after
 	# writeback_done). Meta must fetch video_url over HTTPS: this host's
-	# https_port is 8443 (443 = xray, never bind). Source dir owned by shining.
+	# https_port is 8443 (443 = xray, never bind). Served from /srv/ig, NOT the home
+	# tree: caddy runs as user caddy, /home/shining is 750, and widening it would
+	# also hand the home tree to xray (runs as nobody).
 	handle_path /ig/* {
-		root * /home/shining/services/lark-bot/data/public/ig
+		root * /srv/ig
 		file_server
 	}
 
