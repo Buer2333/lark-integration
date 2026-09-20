@@ -1,0 +1,23 @@
+[Unit]
+Description=Push a Shining Inbox card when %i fails (OnFailure= hook)
+# Instantiated as unit-failure-alert@<failed-unit>.service by OnFailure= on every
+# timer-driven job unit. Runs lark-bot `run.py unit_failure_alert <unit>` which
+# reads systemctl show/journalctl for the failed unit and posts an error card.
+# Exists because OOM kills are SIGKILL: run_with_error_fallback never runs, so
+# 2026-09-19..20 four report units died 39 times with zero cards (T-20260919-007).
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py unit_failure_alert %i
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=unit-failure-alert
+# Reads journal of another unit → needs journal access (systemd-journal group).
+SupplementaryGroups=systemd-journal
+TimeoutStartSec=60
+MemoryMax=150M
+MemorySwapMax=0
+NoNewPrivileges=true

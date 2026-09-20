@@ -3,6 +3,9 @@ Description=lark-bot hourly jobs (ban_alert + ad_report + balance_alert)
 After=network-online.target
 Wants=network-online.target
 
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）
+OnFailure=unit-failure-alert@%n.service
+
 [Service]
 Type=oneshot
 User=shining
@@ -30,4 +33,7 @@ TimeoutStartSec=600
 # headroom for ad_report (~180M peak alone) plus ban_alert's discovery
 # cache + balance_alert's snapshot map living in the same heap.
 MemoryMax=320M
+# 禁 swap（2026-09-19 整机僵死加固，原为手工 drop-in 50-noswap.conf；收编进 git 消灭 drift）。
+# 禁了 swap 之后 MemoryMax 必须按「无 swap 也够用」定：见 2026-09-20 T-20260919-007 实测。
+MemorySwapMax=0
 NoNewPrivileges=true
