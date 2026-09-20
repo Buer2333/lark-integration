@@ -1,0 +1,10 @@
+[Unit]
+Description=Run lark-bot brand_social tick every 15 min (:07/:22/:37/:52 — avoids hourly :58, gmvmax :15/:45, tts-reconcile :25)
+
+[Timer]
+OnCalendar=*:07,22,37,52:00
+Persistent=true
+Unit=brand-social.service
+
+[Install]
+WantedBy=timers.target

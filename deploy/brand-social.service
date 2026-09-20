@@ -1,0 +1,14 @@
+[Unit]
+Description=lark-bot brand_social tick (Instagram 品牌官号运营, swimlane dtc)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+EnvironmentFile=/home/shining/services/lark-bot/.env
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python /home/shining/services/lark-bot/run.py brand_social_tick
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=brand-social
