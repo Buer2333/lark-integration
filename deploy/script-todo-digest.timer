@@ -1,0 +1,10 @@
+[Unit]
+Description=Script todo digest daily at UTC 02:00 (China 10:00)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+# 不补跑：错过就等下一班（同 morning-briefing 加固）；service 侧另有 UTC 窗口护栏
+Persistent=false
+
+[Install]
+WantedBy=timers.target
