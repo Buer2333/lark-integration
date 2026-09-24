@@ -89,6 +89,7 @@ gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo install -m 0644 -o
 
 | 日期 | 操作 | 原因 |
 |---|---|---|
+| 2026-09-24 | `systemctl stop script-todo-digest.timer` + `systemd-run --unit=script-todo-resume --on-calendar='2026-09-25 06:30:00 UTC' systemctl start script-todo-digest.timer`（一次性，transient，重启即失效；timer 仍 enabled） | 09-25 中秋放假，剪辑待办卡跳过当天，09-26 02:00 UTC 起恢复（用户要求） |
 | 2026-04-11 | 手动 `scp` + `daemon-reload` `gmvmax-monitor.timer` 从 `*:00,30` → `*:05,35` | 1529d7b commit 后暴露 lark-integration 无自动部署，drift 2 天 |
 | 2026-04-11 | 在 lark-integration repo 配置 `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` secrets | 新增 `deploy-systemd.yml` 需要 SSH 到 VPS；key 复用 `~/.ssh/google_compute_engine` |
 | 2026-04-11 | 启动 hourly-jobs VPS ↔ GH Actions 双跑观察窗口 | Phase C 迁移 hourly-jobs 到 VPS systemd。Cron-job.org `hourly-trigger` 仍在 :58 触发 GH Actions（pause 待 C4），VPS `hourly-jobs.timer` 在 `:00` 触发。观察 3 个整点（13:00/14:00/15:00 UTC）两侧推送内容一致后关停 GH Actions 侧。 |
