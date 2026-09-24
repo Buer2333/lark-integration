@@ -1,0 +1,24 @@
+[Unit]
+Description=Script todo digest (剪辑待办私聊卡，脚本生产台)
+After=network-online.target
+Wants=network-online.target
+
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+# 窗口护栏（同 morning-briefing）：排程 02:00 UTC（北京 10:00）；[02:00,06:00) UTC 外拒跑，
+# 防 unit 下发/重启误触发给剪辑群发私聊。
+ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 2 ] || [ "$H" -ge 6 ]; then echo "[guard] outside 02-06 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py script_todo_digest'
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=script-todo-digest
+# 读一张 ~150 行的表 + 发十来条私聊；限额沿用 morning-briefing（同一 bootstrap 路径）
+MemoryHigh=300M
+MemoryMax=450M
+MemorySwapMax=0
+NoNewPrivileges=true
