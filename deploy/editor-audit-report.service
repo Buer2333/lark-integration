@@ -13,6 +13,9 @@ WorkingDirectory=/home/shining/services/lark-bot
 # 窗口护栏（2026-08-07 事故加固）：排程 01:30 UTC；[01:00,06:00) UTC 外拒跑。
 ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 1 ] || [ "$H" -ge 6 ]; then echo "[guard] outside 01-06 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py editor_audit_report --today'
 EnvironmentFile=/home/shining/services/lark-bot/.env
+# 2026-09-27：早报跑完顺带回填「脚本生产台」出单/GMV/投放状态（script_perf_backfill 只读缓存+早报快照，零新增 TikTok 请求）。
+# 同样套 UTC 窗口护栏，防 unit 重启误触发；失败走同一 OnFailure 告警。
+ExecStartPost=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 1 ] || [ "$H" -ge 6 ]; then echo "[guard] backfill skipped outside window"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py script_perf_backfill --apply'
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=editor-audit-report
