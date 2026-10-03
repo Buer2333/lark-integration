@@ -1,0 +1,10 @@
+[Unit]
+Description=Roster mirror sync daily at UTC 01:15 (China 09:15)
+
+[Timer]
+OnCalendar=*-*-* 01:15:00
+# 补跑无副作用（幂等 diff-only），错过开机时补一次
+Persistent=true
+
+[Install]
+WantedBy=timers.target
