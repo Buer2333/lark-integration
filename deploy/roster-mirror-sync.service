@@ -1,0 +1,24 @@
+[Unit]
+Description=Roster mirror sync (组织架构表→脚本生产台·成员表「默认产品线」单向镜像)
+After=network-online.target
+Wants=network-online.target
+
+# 失败即推 Shining Inbox（含 OOM SIGKILL）
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+# 只写成员表「默认产品线」变化的格子（diff-only），写后回读校验；空读 / 回读残差 → 非零退出 → OnFailure 告警。
+# 不发任何消息，故不需要时间窗护栏。
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py roster_mirror_sync --apply
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=roster-mirror-sync
+# 读两张小表（组织架构 ~51 行、成员表 ~40 行）；限额沿用 script-todo-digest
+MemoryHigh=300M
+MemoryMax=450M
+MemorySwapMax=0
+NoNewPrivileges=true
