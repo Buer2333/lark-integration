@@ -1,0 +1,10 @@
+[Unit]
+Description=Inspo daily rank confirm cards daily at UTC 10:30 (China 18:30)
+
+[Timer]
+OnCalendar=*-*-* 10:30:00
+# 不补跑：错过就等下一班（同 script-todo-digest）；service 侧另有 UTC 窗口护栏
+Persistent=false
+
+[Install]
+WantedBy=timers.target
