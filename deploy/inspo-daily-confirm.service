@@ -1,0 +1,30 @@
+[Unit]
+Description=Inspo daily rank confirm (今日入选日榜：负责人私聊确认后推群)
+After=network-online.target
+Wants=network-online.target
+
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+# 窗口护栏（同 script-todo-digest）：排程 10:30 UTC（北京 18:30）；[10:00,14:00) UTC 外拒跑，
+# 防 unit 下发/重启误触发给负责人发私聊。未配置 INSPO_CONFIRM_APPROVERS / INSPO_DAILY_GROUP_CHAT
+# 时 job 自己打日志退出 0（功能关闭）。
+ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then echo "[guard] outside 10-14 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py inspo_daily_confirm'
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=inspo-daily-confirm
+# Type=oneshot 默认不设启动超时（无限等）；300s 是新加的防挂死上限，避免卡死的飞书请求 / ffmpeg
+# 让 unit 永远停在 activating。正常耗时：bootstrap（~30s bitable 加载）+ 读灵感库两次 + 查群消息 +
+# 缩略图冷启动（下载附件 + ffmpeg 抽帧，实测 7–22s，最多 15 条、2 并发），远低于上限。
+TimeoutStartSec=300
+# 与 script-todo-digest 同一 bootstrap 路径，另有 ffmpeg 子进程（计入本 cgroup，最多 2 个并发）；
+# 未实测，先按 material-report 的量级给，跑过几天按 journal 峰值再收紧。
+MemoryHigh=350M
+MemoryMax=500M
+MemorySwapMax=0
+NoNewPrivileges=true
