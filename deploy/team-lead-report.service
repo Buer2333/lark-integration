@@ -8,6 +8,8 @@ OnFailure=unit-failure-alert@%n.service
 
 [Service]
 Type=oneshot
+# oneshot 默认无启动超时；prime 挂死会无限期挡住出卡（2026-10-08 审查）。prime ~4.5min + 旧路径出卡 ~25min，超时覆盖 Pre+Start 整段，留足余量。
+TimeoutStartSec=60min
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
 # 先预取归属数据再出卡（2026-10-08 事故：组长卡 v2 只读缓存，原先 prime 排在出卡之后 →
