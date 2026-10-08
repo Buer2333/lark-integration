@@ -10,13 +10,15 @@ OnFailure=unit-failure-alert@%n.service
 Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
+# 先预取归属数据再出卡（2026-10-08 事故：组长卡 v2 只读缓存，原先 prime 排在出卡之后 →
+# 出卡时缓存缺失、6 位组长当日无卡）。`-` 前缀 = 预取失败不阻断出卡（v2 会判未就绪推 Inbox；
+# 旧路径自己取数不受影响）。prime 自带开关（ATTRIBUTION_V2_ENTRIES 不含 prime 时只打日志退出）。
+ExecStartPre=-/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then echo "[guard] attribution_prime skipped outside 10-14 UTC window"; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py attribution_prime --date $YESTERDAY'
 # 窗口护栏（2026-08-07 事故加固）：排程 10:20 UTC；[10:00,14:00) UTC 外拒跑
 # ——该窗口内 ET "yesterday" 才等于正确的 T-1。带参手动补推走引擎直调不受影响。
 ExecStart=/bin/bash -c "H=$(date -u +%%H); if [ \"$H\" -lt 10 ] || [ \"$H\" -ge 14 ]; then echo '[guard] outside 10-14 UTC window, refusing (anti mis-fire)'; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py daily_report --view lead --date $YESTERDAY --push-to-leads"
 # 组长卡 v2 并行预览（用户 2026-10-07，7 天）：旧组长卡不变；`-` 前缀 = 失败不让旧 job 记失败。
-# (a) attribution_prime 自带开关（ATTRIBUTION_V2_ENTRIES 不含 prime 时只打日志退出）；
-# (b) team_lead_v2_preview 只读缓存、只推 Shining Inbox，不私聊组长。窗口护栏同 ExecStart。
-ExecStartPost=-/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then echo "[guard] attribution_prime skipped outside 10-14 UTC window"; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py attribution_prime --date $YESTERDAY'
+# team_lead_v2_preview 只读缓存、只推 Shining Inbox，不私聊组长。窗口护栏同 ExecStart。
 ExecStartPost=-/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then echo "[guard] team_lead_v2_preview skipped outside 10-14 UTC window"; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py team_lead_v2_preview --date $YESTERDAY --push-chat-id oc_66ec50a46020044446d67d1259e6308f'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
