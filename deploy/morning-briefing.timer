@@ -1,8 +1,11 @@
 [Unit]
-Description=Morning Briefing daily at UTC 01:00 (China 09:00)
+Description=Morning Briefing daily at UTC 01:20 (China 09:20)
 
 [Timer]
-OnCalendar=*-*-* 01:00:00
+# 01:00 → 01:20（2026-10-08，用户批准）：hourly-jobs :58 起跑约 90s/~339 请求，00:59:39
+# 才结束，01:00 晨报紧随其后撞 TikTok 40100（2 个 GMVMAX 户失败）。service 的
+# 01–05 UTC 窗口护栏仍覆盖 01:20。
+OnCalendar=*-*-* 01:20:00
 # Persistent 移除（2026-08-07 material-report 事故同类加固）：unit 下发 restart
 # timer 会触发 Persistent 补跑，在错误时刻推送群报表。错过就等下一班；
 # service 侧另有 UTC 窗口护栏双保险。
