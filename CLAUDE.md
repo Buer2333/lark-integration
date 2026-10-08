@@ -83,6 +83,23 @@ gcloud compute scp deploy/xxx.timer lark-bot:/tmp/ --zone=us-west1-b
 gcloud compute ssh lark-bot --zone=us-west1-b --command="sudo install -m 0644 -o root -g root /tmp/xxx.timer /etc/systemd/system/xxx.timer && sudo systemctl daemon-reload && sudo systemctl restart xxx.timer"
 ```
 
+## 改 timer 前的 TikTok 负载核对（2026-10-08 起）
+
+- **挪任何会调 TikTok 的 timer 之前，先按分钟统计**相关 job 的 Ads（`business-api`）和 Shop 调用量、40100 出现的时刻，再决定时段。40100 的成因，看它是跟在本 job 自己的突发之后，还是紧贴在别的 job 之后。**不要凭「两个 timer 挨得近」就推断是撞车。**（反例：lark-integration #19 把早报挪到 01:20，已关闭。实测 40100 出在早报自己 01:01–01:02 那波突发之后，而 01:20 恰好落在 gmvmax-monitor 的高峰里。）
+- **40100 只出自 Ads 接口**（per-token 限流，见下方 2026-04-11 日志）。Shop 接口（`open-api.tiktokglobalshop`）是另一套限流，减少 Shop 请求不会让 40100 变少。
+- **统计写法**（只取时间，不打印整行。httpx 的 `HTTP Request` 行带 token）：`journalctl -u <unit> --since … -o short-iso | awk '/HTTP Request/ && /business-api/ {print substr($1,12,5)}' | uniq -c`
+
+2026-10-06~08 实测（UTC）：
+
+| job | 时段 | 时长 | TikTok 调用 |
+|---|---|---|---|
+| hourly-jobs | 每小时 :58 | 约 90s | 约 339 次请求；它自己每小时就有 4–25 次 40100 |
+| morning-briefing | 01:00 | 11–19 min | 152–175 次 Ads；01:01–01:02 突发约 80 次，01:02–01:07 出 40100 |
+| gmvmax-monitor | :15 / :45 | 约 8 min | 每轮约 305 次 Ads + 315–373 次 Shop |
+| editor-audit-report | 01:30 | 约 45 min | 728 次 Ads（10-08） |
+
+结论：01:00–01:15 是这一小时里 Ads 调用最空的窗口。早报改到 01:05 以后开跑，就会撞上 01:15 的 gmvmax-monitor。
+
 ## VPS 手动操作日志
 
 > 任何 sudoers 调整、非自动化的 systemd 操作、一次性配置变更都记在这里。避免"只存在于人脑里"的知识。
