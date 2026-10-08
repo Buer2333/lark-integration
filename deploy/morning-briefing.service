@@ -11,7 +11,10 @@ Type=oneshot
 User=shining
 WorkingDirectory=/home/shining/services/lark-bot
 # 窗口护栏（2026-08-07 事故加固）：排程 01:00 UTC；[01:00,05:00) UTC 外拒跑。
-ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 1 ] || [ "$H" -ge 5 ]; then echo "[guard] outside 01-05 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py morning_briefing --today'
+# 小组早报 v2 并行期（2026-10-08 起 7 天，T-20261002-002 Phase 3）：--lead-shadow-chat-id
+# 让旧产品线早报照常发群后，同进程再跑 v2 组长卡，只发 Shining Inbox（lark-bot #220/#221）。
+# 退回纯旧模式 = 去掉该参数；回滚表见 lark-bot docs/team-lead-report-v2.md「小组早报 v2」。
+ExecStart=/bin/bash -c 'H=$(date -u +%%H); if [ "$H" -lt 1 ] || [ "$H" -ge 5 ]; then echo "[guard] outside 01-05 UTC window, refusing (anti mis-fire)"; exit 0; fi; exec /home/shining/services/lark-bot/.venv/bin/python run.py morning_briefing --today --lead-shadow-chat-id oc_66ec50a46020044446d67d1259e6308f'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
