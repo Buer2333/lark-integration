@@ -18,8 +18,9 @@ EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=inspo-daily-confirm
-# bootstrap（~30s bitable 加载）+ 读灵感库两次 + 查群消息 + 缩略图冷启动（下载附件 + ffmpeg
-# 抽帧，实测 7–22s，最多 15 条、2 并发）——systemd 默认 TimeoutStartSec=90s 可能在抽帧中途杀掉。
+# Type=oneshot 默认不设启动超时（无限等）；300s 是新加的防挂死上限，避免卡死的飞书请求 / ffmpeg
+# 让 unit 永远停在 activating。正常耗时：bootstrap（~30s bitable 加载）+ 读灵感库两次 + 查群消息 +
+# 缩略图冷启动（下载附件 + ffmpeg 抽帧，实测 7–22s，最多 15 条、2 并发），远低于上限。
 TimeoutStartSec=300
 # 与 script-todo-digest 同一 bootstrap 路径，另有 ffmpeg 子进程（计入本 cgroup，最多 2 个并发）；
 # 未实测，先按 material-report 的量级给，跑过几天按 journal 峰值再收紧。
