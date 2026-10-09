@@ -1,0 +1,29 @@
+[Unit]
+Description=Script pool today (投放池「今日实时」三列：GMVMAX 监控 side file + 手投逐广告 → 按脚本编号回填)
+After=network-online.target
+Wants=network-online.target
+
+# 失败即推 Shining Inbox（含 OOM SIGKILL —— Python 侧的 run_with_error_fallback 收不到那条路径）。
+# 守恒不等 / 写表未全部成功时 job 自己 exit 1，同样走这里告警。
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+# 开关在 job 内判断：ATTRIBUTION_V2_ENTRIES 不含 script_pool_today 时只打一行 skip、exit 0。
+ExecStart=/home/shining/services/lark-bot/.venv/bin/python run.py script_pool_today --apply
+Environment=PATH=/home/shining/services/lark-bot/.venv/bin:/usr/bin
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=script-pool-today
+# 必须在 :45 的 gmvmax-monitor 高峰轮之前结束：:33 起跑 + 420s = :40。
+# 预估：bootstrap + 投放池/人员表读取 + 手投户 × 1–2 户日期 × ~3 页 + oEmbed 预算 cap=30（最坏 ~150s）。
+TimeoutStartSec=420
+# 未实测，先按同样走 bootstrap 路径的 inspo-daily-confirm / editor-audit-report 量级给；
+# 生产干跑（plan V3）按 journal 峰值再收紧。
+MemoryHigh=300M
+MemoryMax=450M
+MemorySwapMax=0
+NoNewPrivileges=true

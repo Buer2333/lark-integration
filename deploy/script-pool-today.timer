@@ -1,0 +1,13 @@
+[Unit]
+Description=Script pool today hourly at :33 (skips 01:33 UTC — morning briefing window)
+
+[Timer]
+# :33 = gmvmax-monitor :15 轮（实测 6–8 分钟，:21–:23 结束）写完 side file 之后，
+# 且在 :45 监控轮 / :58 hourly-jobs 之前结束（TimeoutStartSec=420）。
+# 跳过 01 点：morning-briefing 01:00 起跑，峰值内存与 Ads 突发都在这一小时。
+OnCalendar=*-*-* 00,02..23:33:00
+# 不补跑：错过就等下一班（数据是「当日累计」，下一轮自然覆盖）
+Persistent=false
+
+[Install]
+WantedBy=timers.target
