@@ -18,7 +18,7 @@ lark-bot 回答另一个问题：**"job 做什么"**。
 
 ### 常见耦合场景
 
-- **新 job + 定时跑** → lark-bot 加 `jobs/new_job.py` + 注册 `run.py`；lark-integration 加 `deploy/new-job.{service,timer}`
+- **新 job + 定时跑** → lark-bot 加 `jobs/new_job.py` + 注册 `run.py`；lark-integration 加 `deploy/new-job.{service,timer}`。**上线顺序**：job 需要的新 env 键先追加到 VPS `.env` → 合并 lark-bot，等 Deploy 绿（deploy 会重启 `lark-bot-ws`，读到新 env）→ 最后合并本仓库的 timer。本仓库合并后 `deploy-systemd.yml` 会立即 enable 并启动 timer；如果 lark-bot 那边还没部署，到点 `run.py` 找不到 job 会失败，并触发 unit-failure 告警（2026-10-08 `inspo-daily-confirm` 按这个顺序上线）
 - **只改频率** → 只改本仓库的 `.timer` OnCalendar
 - **只改 job 行为/输出** → 只改 lark-bot 的 Python 代码
 
