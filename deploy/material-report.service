@@ -17,34 +17,26 @@ WorkingDirectory=/home/shining/services/lark-bot
 # 2026-09-17 组长→组员维度：末尾 material_dispatch --by-lead 按组织架构表逐组长出跨产品线
 # 小组卡，路由走 chat_routing.json 的 lead:<组长> 键（缺键只告警不回落）；原
 # FlyNew-US-Shilajit --team 汪宇航 一行删除（该组旧卡口径错误，用户 2026-09-17 决定停发）。
-# 用 ; 而非 && 接在最后：公共车道卡任一失败不应连带跳过小组卡。MemoryMax 200M→320M
-# （by-lead 一次拉全车道明细，参考 script-library-sync 212M 峰值）。
+# MemoryMax 200M→320M（by-lead 一次拉全车道明细，参考 script-library-sync 212M 峰值）。
+# 2026-10-20 旧版下线：按产品线的 5 行 material_report（NAD+ / Hiileathy Shilajit /
+# FlyNew Shilajit 杨斯丹组 / FlyNew Bundle / Hiileathy NMN）删除，只留按组长的新版
+# （用户：「新版要上线一定要确保旧版下线，一定不要出现一个组发2次」；Bundle 群无组长路由，
+# 用户定为停发）。爆款脚本库回写已迁入 material_dispatch --by-lead。同群同报告日
+# 只发一张由 lark-bot 发送台账机器保证（~/.cache/lark-bot/material_send_ledger.json）。
+# ⚠️ 上线顺序：必须先部署带台账与新版卡的 lark-bot，再部署本 unit——反过来
+# （旧 lark-bot + 本 unit）会让所有群零张、回写中断；下方 ExecStart 检查台账模块，
+# 缺失即 exit 1（OnFailure 推 Inbox），不静默零发送。
 ExecStart=/bin/bash -c '\
   H=$(date -u +%%H) && \
   if [ "$H" -lt 10 ] || [ "$H" -ge 14 ]; then \
     echo "[guard] refusing to run outside 10:00-14:00 UTC window (now ${H}:xx UTC) — anti mis-fire, see 2026-08-07 incident"; \
     exit 0; \
   fi && \
+  if [ ! -f core/material_send_ledger.py ]; then \
+    echo "[guard] lark-bot lacks core/material_send_ledger.py (old build) — refusing: deploy lark-bot first"; \
+    exit 1; \
+  fi && \
   YESTERDAY=$(TZ=America/New_York date -d "yesterday" +%%Y-%%m-%%d) && \
-  .venv/bin/python run.py material_report \
-    --product-group Hiileathy-US-NAD+ \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_d7e61968e4a6d9989b4354bc14861e12 && \
-  .venv/bin/python run.py material_report \
-    --product-group Hiileathy-US-Shilajit \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_ab30ead006c140725a1ee0e8fd98e6d4 && \
-  .venv/bin/python run.py material_report \
-    --product-group FlyNew-US-Shilajit --team 杨斯丹 \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_3a8c367358d0ae61ba9fa26f52ba2f86 && \
-  .venv/bin/python run.py material_report \
-    --product-group FlyNew-US-Bundle \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" \
-    --push-chat-id oc_20ccb01affd50aade9ff16a0e714f8d8 && \
-  .venv/bin/python run.py material_report \
-    --product-group Hiileathy-US-NMN \
-    --start-date "$YESTERDAY" --end-date "$YESTERDAY" ; \
   .venv/bin/python run.py material_dispatch --by-lead --date "$YESTERDAY"'
 EnvironmentFile=/home/shining/services/lark-bot/.env
 StandardOutput=journal
