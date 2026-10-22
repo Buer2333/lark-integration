@@ -1,0 +1,26 @@
+[Unit]
+Description=Editor Daily Table (系统归因数字写入创意剪辑日报「日报」表)
+After=network-online.target
+Wants=network-online.target
+
+# 失败即推 Shining Inbox（job 自身失败也会推 Inbox 并 exit 1；这里兜底 OOM / 崩溃）
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+TimeoutStartSec=20min
+User=shining
+WorkingDirectory=/home/shining/services/lark-bot
+# 排程 10:45 UTC（北京 18:45）：team-lead-report 10:20 开跑，近 4 天 10:28～10:33 结束（attribution 缓存就绪）。
+# 日报推送（多维表格自动化）北京 19:00；推送只展示「日报批次」已发布的批次，没写完 = 显示未就绪，不会推旧数。
+# 窗口护栏：[10:00,14:00) UTC 外拒跑——该窗口内 ET "yesterday" 才等于正确的 T-1（同 team-lead-report）。
+ExecStart=/bin/bash -c "H=$(date -u +%%H); if [ \"$H\" -lt 10 ] || [ \"$H\" -ge 14 ]; then echo '[guard] outside 10-14 UTC window, refusing (anti mis-fire)'; exit 0; fi; YESTERDAY=$(TZ=America/New_York date -d yesterday +%%Y-%%m-%%d) && exec .venv/bin/python run.py editor_daily_table --date $YESTERDAY --apply"
+EnvironmentFile=/home/shining/services/lark-bot/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=editor-daily-table
+# 只读 attribution 缓存 + 两张小表（同组长卡 v2 的 compute）；限额同 team-lead-report，首跑看 journal memory peak。
+MemoryHigh=450M
+MemoryMax=600M
+MemorySwapMax=0
+NoNewPrivileges=true

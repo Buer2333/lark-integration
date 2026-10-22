@@ -1,0 +1,11 @@
+[Unit]
+Description=Editor Daily Table Timer (18:45 CST)
+
+[Timer]
+# 18:45 CST = 10:45 UTC；日报推送 19:00 CST（用户 2026-10-22 定）。
+OnCalendar=*-*-* 10:45:00 UTC
+# 不补跑：unit 下发 restart timer 不应在错误时刻写表（同 team-lead-report）。
+Persistent=false
+
+[Install]
+WantedBy=timers.target
