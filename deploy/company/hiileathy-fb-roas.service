@@ -1,0 +1,30 @@
+[Unit]
+Description=Hiileathy FB daily ROAS (refresh fb_roas, then push ROAS card)
+After=network-online.target
+Wants=network-online.target
+OnFailure=unit-failure-alert@%n.service
+
+[Service]
+Type=oneshot
+User=larkbot
+WorkingDirectory=/home/larkbot/services/hiileathy-review
+# 先 lark-bot 的 .env，再 hiileathy-review 的 .env（后者覆盖前者，也覆盖下面的 Environment=）
+EnvironmentFile=/home/larkbot/services/lark-bot/.env
+EnvironmentFile=/home/larkbot/services/hiileathy-review/.env
+Environment=TZ=UTC
+Environment=PATH=/home/larkbot/services/lark-bot/.venv/bin:/home/larkbot/.local/bin:/usr/local/bin:/usr/bin
+# 目标群 chat_id 不写在 unit 里：在 hiileathy-review/.env 里配 FB_ROAS_CHAT=oc_xxx
+Environment=FB_ROAS_CHAT=
+# 未配 FB_ROAS_CHAT 就直接失败，别白刷新一遍再失败
+ExecStartPre=/usr/bin/test -n ${FB_ROAS_CHAT}
+# 第一步：刷新 ROAS 数据（失败则整个 unit 失败，不推旧数）
+ExecStartPre=/home/larkbot/services/lark-bot/.venv/bin/python3 scripts/fb_roas.py --refresh
+# 第二步：推送
+ExecStart=/home/larkbot/services/lark-bot/.venv/bin/python3 scripts/fb_daily_roas_push.py --chat ${FB_ROAS_CHAT}
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hiileathy-fb-roas
+TimeoutStartSec=900
+MemoryMax=400M
+MemorySwapMax=0
+NoNewPrivileges=true

@@ -1,0 +1,9 @@
+[Unit]
+Description=Hiileathy FB daily ROAS, 10:00 UTC (replaces GCP crontab 0 10 * * *)
+
+[Timer]
+OnCalendar=*-*-* 10:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

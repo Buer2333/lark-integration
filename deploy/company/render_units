@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""把 deploy/ 一层的 systemd 单元渲染成「公司服务器（dj 主机）」版本。
+
+规则（见 README.md）：
+  * User=shining -> larkbot；/home/shining/ -> /home/larkbot/
+  * 每个 .service 的 [Service] 段：Environment=TZ=UTC；PATH 指向 lark-bot venv + ~/.local/bin
+  * 每个 .timer：没写时区的 OnCalendar= 末尾补 " UTC"
+  * 缺 MemoryMax= 的 .service 补上（lark-bot-ws 1G，其余 500M），已有的保留
+  * 跳过清单见 SKIP_FILES（GCP 专属的隧道/网关/对账等）
+
+只用标准库。不写 deploy/ 本身；输出到 --out（--check 时写临时目录）。
+"""
+import argparse
+import difflib
+import re
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+# 跳过（不生成）：GCP 专属或公司侧不需要的单元。非 .service/.timer 的文件（Caddyfile、
+# cloudflared-config.yml、*.conf、*.sh）本来就不处理。
+SKIP_FILES = [
+    "cloudflared.service",
+    "h3-tunnel.service",
+    "tiktok-gateway.service",
+    "tts-order-reconcile.service",
+    "tts-order-reconcile.timer",
+]
+
+OLD_USER, NEW_USER = "shining", "larkbot"
+OLD_HOME, NEW_HOME = "/home/shining/", "/home/larkbot/"
+NEW_PATH = ("/home/larkbot/services/lark-bot/.venv/bin:/home/larkbot/.local/bin:"
+            "/usr/local/bin:/usr/bin")
+MEM_DEFAULT = "500M"
+MEM_BY_UNIT = {"lark-bot-ws.service": "1G"}
+
+SECTION_RE = re.compile(r"^\[(.+)\]\s*$")
+TZ_TOKEN_RE = re.compile(r"^(UTC|GMT|Z|[A-Za-z]+/[A-Za-z0-9_+\-/]+|[A-Z]{3,5})$")
+SHORTHAND = {"minutely", "hourly", "daily", "monthly", "weekly", "yearly",
+             "quarterly", "semiannually", "annually", "biannually"}
+
+
+def has_tz(value):
+    last = value.split()[-1] if value.split() else ""
+    return bool(TZ_TOKEN_RE.match(last)) and not re.match(r"^\d", last)
+
+
+def add_tz(value):
+    v = value.strip()
+    if has_tz(v):
+        return v
+    if v.lower() in SHORTHAND:
+        sys.stderr.write("WARN: shorthand OnCalendar=%s 未补时区，请人工确认\n" % v)
+        return v
+    return v + " UTC"
+
+
+def insert_into_section(lines, section, new_lines):
+    """把 new_lines 追加到 [section] 段末尾（跳过段尾空行/空注释前插入）。"""
+    start = None
+    for i, ln in enumerate(lines):
+        m = SECTION_RE.match(ln)
+        if m and m.group(1) == section:
+            start = i
+            break
+    if start is None:
+        return lines
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        if SECTION_RE.match(lines[j]):
+            end = j
+            break
+    # 回退到段内最后一个非空行之后
+    k = end
+    while k > start + 1 and lines[k - 1].strip() == "":
+        k -= 1
+    return lines[:k] + new_lines + lines[k:]
+
+
+def render_service(name, text):
+    text = text.replace(OLD_HOME, NEW_HOME)
+    lines = text.split("\n")
+    out = []
+    in_service = False
+    saw_mem = False
+    for ln in lines:
+        m = SECTION_RE.match(ln)
+        if m:
+            in_service = m.group(1) == "Service"
+        if in_service:
+            if re.match(r"^User=" + OLD_USER + r"\s*$", ln):
+                ln = "User=" + NEW_USER
+            elif re.match(r'^Environment="?PATH=', ln):
+                continue  # 统一在段末重写
+            elif re.match(r'^Environment="?TZ=', ln):
+                continue
+            elif re.match(r"^MemoryMax=", ln):
+                saw_mem = True
+        out.append(ln)
+    add = ["Environment=TZ=UTC", "Environment=PATH=" + NEW_PATH]
+    if not saw_mem:
+        add.append("MemoryMax=" + MEM_BY_UNIT.get(name, MEM_DEFAULT))
+    out = insert_into_section(out, "Service", add)
+    return "\n".join(out)
+
+
+def render_timer(name, text):
+    text = text.replace(OLD_HOME, NEW_HOME)
+    out = []
+    for ln in text.split("\n"):
+        m = re.match(r"^(OnCalendar=)(.*)$", ln)
+        if m:
+            ln = m.group(1) + add_tz(m.group(2))
+        out.append(ln)
+    return "\n".join(out)
+
+
+def diff_summary(name, old, new):
+    d = [l for l in difflib.unified_diff(old.split("\n"), new.split("\n"), lineterm="", n=0)
+         if (l.startswith("+") or l.startswith("-")) and not l.startswith(("+++", "---"))]
+    return d
+
+
+def main():
+    here = Path(__file__).resolve().parent
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--src", default=str(here.parent), help="单元所在目录（默认 deploy/）")
+    ap.add_argument("--out", default="./rendered", help="输出目录（默认 ./rendered）")
+    ap.add_argument("--check", action="store_true", help="只生成到临时目录并打印摘要，不写 --out")
+    ap.add_argument("--quiet", action="store_true", help="只打印每个文件的改动行数，不打印具体 diff")
+    args = ap.parse_args()
+
+    src = Path(args.src)
+    units = sorted(p for p in src.iterdir() if p.is_file() and p.suffix in (".service", ".timer"))
+    print("跳过清单（SKIP_FILES）：")
+    for s in SKIP_FILES:
+        print("  - " + s)
+
+    out_dir = Path(tempfile.mkdtemp(prefix="render_units_")) if args.check else Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    n_gen = n_skip = 0
+    for p in units:
+        if p.name in SKIP_FILES:
+            n_skip += 1
+            continue
+        old = p.read_text()
+        new = render_timer(p.name, old) if p.suffix == ".timer" else render_service(p.name, old)
+        (out_dir / p.name).write_text(new)
+        n_gen += 1
+        d = diff_summary(p.name, old, new)
+        print("\n== %s (%d 行变动)" % (p.name, len(d)))
+        if not args.quiet:
+            for l in d:
+                print("   " + l)
+
+    leftovers = []
+    for f in sorted(out_dir.iterdir()):
+        t = f.read_text()
+        if "/home/shining" in t or re.search(r"^User=shining", t, re.M):
+            leftovers.append(f.name)
+    print("\n原单元 %d 个，跳过 %d 个，生成 %d 个（%d - %d = %d）" %
+          (len(units), n_skip, n_gen, len(units), n_skip, len(units) - n_skip))
+    if leftovers:
+        print("ERROR: 渲染结果仍含 shining 路径/用户：" + ", ".join(leftovers), file=sys.stderr)
+        return 1
+    if args.check:
+        print("--check：临时目录 %s（未写 --out）" % out_dir)
+    else:
+        print("已写入 %s" % out_dir.resolve())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
