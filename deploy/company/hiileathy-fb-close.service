@@ -17,6 +17,8 @@ Environment=PATH=/home/larkbot/services/lark-bot/.venv/bin:/home/larkbot/.local/
 ExecStartPre=/home/larkbot/services/lark-bot/.venv/bin/python3 scripts/fb_roas.py --refresh
 # 第二步：推送
 ExecStart=/home/larkbot/services/lark-bot/.venv/bin/python3 scripts/fb_daily_close_push.py
+# exit 4 = 广告户已封/停用，脚本按设计不推（被封户门，2026-09-27 定）；不算失败、不触发 OnFailure 告警
+SuccessExitStatus=4
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=hiileathy-fb-close
